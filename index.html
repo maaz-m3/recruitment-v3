@@ -1,0 +1,1878 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TalentLens | AI Recruitment Screening & Decision Support</title>
+<meta name="description" content="TalentLens: AI-assisted CV screening, competency benchmarking and candidate cost-benefit analysis.">
+<meta name="application-name" content="TalentLens">
+<meta property="og:title" content="TalentLens">
+<meta property="og:description" content="AI-assisted CV screening, competency benchmarking and candidate cost-benefit analysis.">
+<meta name="theme-color" content="#FD5108">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="https://unpkg.com/lucide@0.460.0"></script>
+<script>
+/* Brand tokens live here (and in :root below) so they can be swapped for the official PwC specification in one place. */
+tailwind.config = { theme: { extend: {
+  fontFamily: {
+    sans: ['"Helvetica Neue"', 'Helvetica', 'Arial', 'sans-serif'],
+    serif: ['Georgia', '"Times New Roman"', 'serif']
+  },
+  colors: { pwc: { orange:'#FD5108', burgundy:'#D04A02', tangerine:'#EB8C00', yellow:'#FFB600', rose:'#DB536A',
+                   charcoal:'#2D2D2D', slate:'#464646', grey:'#6B6B6B', light:'#F2F0EC', surface:'#FAFAF8', line:'#E4E1DB' } },
+  animation: { 'fade-in':'fadeIn .35s ease forwards', 'slide-up':'slideUp .4s ease forwards' },
+  keyframes: { fadeIn:{'0%':{opacity:'0'},'100%':{opacity:'1'}}, slideUp:{'0%':{opacity:'0',transform:'translateY(12px)'},'100%':{opacity:'1',transform:'translateY(0)'}} }
+} } }
+</script>
+<style>
+:root{--orange:#FD5108;--orange-dark:#D04A02;--ink:#2D2D2D;--line:#E4E1DB;--surface:#FAFAF8}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:#F2F0EC}::-webkit-scrollbar-thumb{background:#C9C5BD;border-radius:3px}
+.no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}
+.glass-card{background:#fff;border:1px solid var(--line)}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--orange-dark)}
+.tab-indicator{position:relative}
+.tab-indicator::after{content:'';position:absolute;bottom:-1px;left:0;width:100%;height:3px;background:var(--orange);transform:scaleX(0);transition:transform .25s ease;transform-origin:left}
+.tab-indicator.active::after{transform:scaleX(1)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,a:focus-visible{outline:3px solid #1b6ef3;outline-offset:2px}
+input[type=range]{-webkit-appearance:none;background:transparent;height:24px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;height:20px;width:20px;border-radius:50%;background:var(--orange);cursor:pointer;margin-top:-7px;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)}
+input[type=range]::-webkit-slider-runnable-track{width:100%;height:6px;cursor:pointer;background:#DDD9D1;border-radius:999px}
+input[type=range]::-moz-range-thumb{height:20px;width:20px;border-radius:50%;background:var(--orange);border:2px solid #fff}
+.num{font-variant-numeric:tabular-nums}
+details>summary{list-style:none}details>summary::-webkit-details-marker{display:none}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body class="bg-pwc-surface text-pwc-charcoal font-sans antialiased selection:bg-pwc-orange selection:text-white min-h-screen flex flex-col">
+<a href="#mainContent" class="sr-only focus:not-sr-only focus:absolute focus:z-[70] focus:bg-white focus:p-3">Skip to content</a>
+<div class="h-1 w-full bg-pwc-orange fixed top-0 left-0 z-50" aria-hidden="true"></div>
+
+<header class="bg-white border-b border-pwc-line sticky top-1 z-40">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between items-center h-16">
+      <div class="flex items-center gap-4">
+        <!-- Official logo: supply your authorised file as logo.png next to index.html. Nothing is drawn or approximated here. -->
+        <img src="logo.png" alt="Company logo" class="h-9 w-auto max-w-[150px] object-contain" onerror="this.style.display='none'">
+        <div class="hidden sm:block h-7 w-px bg-pwc-line" aria-hidden="true"></div>
+        <span class="font-serif text-xl font-bold tracking-tight">TalentLens</span>
+      </div>
+      <div class="flex items-center gap-2 sm:gap-3">
+        <div class="hidden md:flex items-center px-3 py-1 rounded-full bg-pwc-light border border-pwc-line text-xs font-medium text-pwc-slate"><span class="w-2 h-2 rounded-full bg-pwc-orange mr-2"></span><span id="activeRoleLabel">Ready for engagement</span></div>
+        <button onclick="exportRecruitmentReport()" id="exportReportBtn" class="hidden text-xs sm:text-sm font-semibold px-3.5 py-2 rounded-lg border border-pwc-charcoal text-pwc-charcoal hover:bg-pwc-charcoal hover:text-white transition-colors items-center gap-1.5"><i data-lucide="file-text" class="w-4 h-4"></i><span>Export Talent Report</span></button>
+        <button onclick="loadSampleInputs()" class="text-xs sm:text-sm font-medium px-3.5 py-2 rounded-lg border border-pwc-line hover:border-pwc-orange hover:text-pwc-burgundy transition-colors flex items-center gap-1.5 bg-white"><i data-lucide="sparkles" class="w-4 h-4 text-pwc-orange"></i><span>Load Sample Inputs</span></button>
+      </div>
+    </div>
+    <nav class="flex space-x-6 overflow-x-auto no-scrollbar" role="tablist" aria-label="Main navigation">
+      <button role="tab" onclick="switchTab('intake')" id="tab-intake" class="tab-indicator active py-3 px-1 text-sm font-bold text-pwc-charcoal whitespace-nowrap flex items-center gap-2" aria-selected="true"><i data-lucide="file-up" class="w-4 h-4"></i><span>1. Engagement Intake</span></button>
+      <button role="tab" onclick="switchTab('assessment')" id="tab-assessment" class="tab-indicator py-3 px-1 text-sm font-medium text-pwc-grey hover:text-pwc-charcoal whitespace-nowrap flex items-center gap-2" aria-selected="false"><i data-lucide="user-check" class="w-4 h-4"></i><span>2. Candidate Assessment</span><span id="candidateCountBadge" class="ml-1 px-2 py-0.5 text-[11px] font-bold rounded-full bg-pwc-light text-pwc-charcoal">0</span></button>
+      <button role="tab" onclick="switchTab('cba')" id="tab-cba" class="tab-indicator py-3 px-1 text-sm font-medium text-pwc-grey hover:text-pwc-charcoal whitespace-nowrap flex items-center gap-2" aria-selected="false"><i data-lucide="calculator" class="w-4 h-4"></i><span>3. Cost-Benefit Analysis</span></button>
+      <button role="tab" onclick="switchTab('reports')" id="tab-reports" class="tab-indicator py-3 px-1 text-sm font-medium text-pwc-grey hover:text-pwc-charcoal whitespace-nowrap flex items-center gap-2" aria-selected="false"><i data-lucide="bar-chart-3" class="w-4 h-4"></i><span>4. Reports & Analytics</span></button>
+    </nav>
+  </div>
+</header>
+
+<div id="toastContainer" class="fixed bottom-5 right-5 z-[60] flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0" role="status" aria-live="polite"></div>
+
+<main id="mainContent" class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+<!-- ===================== 1. INTAKE ===================== -->
+<section id="view-intake" class="space-y-6">
+  <div class="bg-pwc-charcoal text-white rounded-2xl p-6 sm:p-8 relative overflow-hidden">
+    <div class="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-pwc-orange/30 to-transparent pointer-events-none"></div>
+    <div class="relative z-10 max-w-3xl">
+      <div class="eyebrow !text-orange-300 mb-3">TalentLens screening engine</div>
+      <h1 class="font-serif text-2xl sm:text-3xl font-bold tracking-tight mb-2">Screen candidates, benchmark competencies and model hiring economics</h1>
+      <p class="text-gray-300 text-sm sm:text-base leading-relaxed">Upload the Job Description and candidate CVs (PDF, Word, or scanned image). TalentLens reads each CV, scores it on five evidence-based competency dimensions, explains the ranking, and supports a PKR cost-benefit view for every candidate.</p>
+    </div>
+  </div>
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <div class="lg:col-span-5 glass-card rounded-2xl p-6 flex flex-col justify-between">
+      <div>
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2.5"><div class="w-8 h-8 rounded-lg bg-pwc-light text-pwc-burgundy flex items-center justify-center font-bold text-sm">01</div>
+            <div><h2 class="text-base font-bold">Job Description</h2><p class="text-xs text-pwc-grey">Upload a file or paste requirements</p></div></div>
+          <label for="jdFileInput" class="cursor-pointer inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-pwc-light hover:bg-pwc-line transition-colors"><i data-lucide="upload" class="w-3.5 h-3.5"></i><span>Import JD</span></label>
+          <input type="file" id="jdFileInput" accept=".pdf,.docx,.txt" class="hidden" onchange="handleJDUpload(event)">
+        </div>
+        <div id="jdFileBadge" class="hidden mb-3 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-between text-xs text-emerald-800">
+          <div class="flex items-center gap-2 truncate"><i data-lucide="file-check" class="w-4 h-4 shrink-0"></i><span id="jdFileName" class="font-medium truncate">jd.pdf</span></div>
+          <button onclick="clearJD()" class="font-semibold ml-2">Clear</button></div>
+        <div class="space-y-3">
+          <div><label for="jobTitleInput" class="block text-xs font-semibold text-pwc-slate uppercase tracking-wider mb-1">Role title</label>
+            <input type="text" id="jobTitleInput" placeholder="e.g., Senior Cloud Solutions Architect" class="w-full px-3.5 py-2.5 rounded-lg border border-pwc-line text-sm focus:border-pwc-orange"></div>
+          <div><label for="jdTextInput" class="block text-xs font-semibold text-pwc-slate uppercase tracking-wider mb-1">Responsibilities & requirements</label>
+            <textarea id="jdTextInput" rows="10" placeholder="Paste the full Job Description here or import a file above..." class="w-full px-3.5 py-2.5 rounded-lg border border-pwc-line text-sm focus:border-pwc-orange leading-relaxed"></textarea></div>
+        </div>
+      </div>
+      <div class="mt-4 pt-4 border-t border-pwc-line flex items-center justify-between text-xs text-pwc-grey"><span>Client-side text extraction & OCR</span><span id="jdCharCount">0 chars</span></div>
+    </div>
+    <div class="lg:col-span-7 glass-card rounded-2xl p-6 flex flex-col justify-between">
+      <div>
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2.5"><div class="w-8 h-8 rounded-lg bg-pwc-light text-pwc-burgundy flex items-center justify-center font-bold text-sm">02</div>
+            <div><h2 class="text-base font-bold">Candidate CVs</h2><p class="text-xs text-pwc-grey">PDF, Word or scanned image resumes</p></div></div>
+          <button onclick="clearAllCVs()" id="clearCVsBtn" class="hidden text-xs font-medium text-pwc-burgundy hover:underline">Remove all</button>
+        </div>
+        <div id="cvDropZone" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();document.getElementById('cvFileInput').click()}" onclick="document.getElementById('cvFileInput').click()" class="border-2 border-dashed border-pwc-line hover:border-pwc-orange rounded-2xl p-8 text-center cursor-pointer transition-all bg-pwc-surface group">
+          <input type="file" id="cvFileInput" multiple accept=".pdf,.docx,.txt,.png,.jpg,.jpeg,.webp" class="hidden" onchange="handleCVFiles(event.target.files)">
+          <div class="w-12 h-12 rounded-xl bg-white border border-pwc-line flex items-center justify-center mx-auto mb-3"><i data-lucide="folder-up" class="w-6 h-6 text-pwc-orange"></i></div>
+          <p class="text-sm font-semibold">Click to upload CVs or drag & drop</p>
+          <p class="text-xs text-pwc-grey mt-1">.PDF, .DOCX and images (scanned CVs are read with OCR). Duplicate files are ignored.</p>
+        </div>
+        <div class="mt-5">
+          <div class="flex items-center justify-between mb-2"><span class="text-xs font-semibold text-pwc-slate uppercase tracking-wider">Parsed candidate queue</span><span id="queuedCountText" class="text-xs font-medium text-pwc-grey">0 files ready</span></div>
+          <div id="cvQueueList" class="space-y-2.5 max-h-72 overflow-y-auto pr-1"></div>
+        </div>
+      </div>
+      <div class="mt-6 pt-5 border-t border-pwc-line flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex flex-wrap items-center gap-2 text-xs text-pwc-slate"><i data-lucide="shield-check" class="w-4 h-4 text-pwc-orange shrink-0"></i><span>Evidence-based scoring powered by Gemini AI</span><span id="aiStatusChip" class="px-2 py-0.5 rounded-full border text-[11px] font-semibold bg-gray-100 text-pwc-grey border-gray-200">Checking AI…</span></div>
+        <button id="analyzeBtn" onclick="runRecruitmentAnalysis()" class="w-full sm:w-auto px-6 py-3 rounded-lg bg-pwc-orange hover:bg-pwc-burgundy text-black hover:text-white font-bold text-sm transition-colors flex items-center justify-center gap-2"><i data-lucide="play" class="w-4 h-4"></i><span>Run screening & benchmark</span></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div id="analysisLoader" class="hidden fixed inset-0 bg-pwc-charcoal/70 z-50 items-center justify-center p-4" role="alertdialog" aria-live="assertive" aria-label="TalentLens is evaluating candidates">
+  <div class="bg-white rounded-2xl max-w-md w-full p-7 shadow-2xl text-center animate-slide-up">
+    <div class="w-14 h-14 rounded-xl bg-pwc-light flex items-center justify-center mx-auto mb-4"><div class="w-7 h-7 border-[3px] border-pwc-orange border-t-transparent rounded-full animate-spin"></div></div>
+    <h3 class="font-serif text-xl font-bold mb-1">TalentLens is evaluating the candidate pool</h3>
+    <p id="loaderStatusText" class="text-sm text-pwc-grey mb-4">Mapping candidate evidence to JD competencies...</p>
+    <div class="w-full bg-pwc-light rounded-full h-2 overflow-hidden"><div id="loaderProgressBar" class="bg-pwc-orange h-2 rounded-full transition-all duration-500" style="width:35%"></div></div>
+  </div>
+</div>
+
+<!-- ===================== 2. CANDIDATE ASSESSMENT ===================== -->
+<section id="view-assessment" class="hidden space-y-5">
+  <div class="glass-card rounded-2xl p-5 flex flex-wrap items-end gap-4">
+    <div><label for="assessCandSelect" class="block text-[11px] font-bold uppercase text-pwc-grey mb-1">Candidate</label>
+      <select id="assessCandSelect" onchange="openAssessment(this.value)" class="px-3 py-2 rounded-lg border border-pwc-line text-sm font-semibold bg-white min-w-[220px]"></select></div>
+    <div class="flex gap-2"><button onclick="stepAssessment(-1)" class="px-3 py-2 rounded-lg border border-pwc-line text-xs font-semibold hover:border-pwc-orange" aria-label="Previous candidate">‹ Prev</button><button onclick="stepAssessment(1)" class="px-3 py-2 rounded-lg border border-pwc-line text-xs font-semibold hover:border-pwc-orange" aria-label="Next candidate">Next ›</button></div>
+    <div id="assessHeader" class="flex-1 min-w-[200px]"></div>
+  </div>
+  <div id="assessTabs" role="tablist" aria-label="Candidate assessment sections" class="flex flex-wrap gap-2"></div>
+  <div id="assessBody"></div>
+</section>
+
+<!-- ===================== 3. COST-BENEFIT ===================== -->
+<section id="view-cba" class="hidden space-y-5">
+  <div class="glass-card rounded-2xl p-5 flex flex-wrap items-end gap-4">
+    <div class="min-w-[220px]"><span class="eyebrow">Cost-Benefit Analysis</span>
+      <h2 class="font-serif text-xl font-bold">Candidate hiring economics (PKR)</h2></div>
+    <div><label for="cbaCandSelect" class="block text-[11px] font-bold uppercase text-pwc-grey mb-1">Candidate</label>
+      <select id="cbaCandSelect" onchange="openCBA(this.value)" class="px-3 py-2 rounded-lg border border-pwc-line text-sm font-semibold bg-white min-w-[220px]"></select></div>
+    <button onclick="goReports('fincmp')" class="px-3 py-2 rounded-lg border border-pwc-charcoal text-xs font-semibold hover:bg-pwc-charcoal hover:text-white">Compare candidates →</button>
+  </div>
+  <div id="cbaRoot"></div>
+</section>
+
+<!-- ===================== 4. REPORTS & ANALYTICS ===================== -->
+<section id="view-reports" class="hidden space-y-5">
+  <div id="reportTabs" role="tablist" aria-label="Reports and analytics sections" class="flex flex-wrap gap-2"></div>
+
+  <div id="rp-overview" class="space-y-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="glass-card rounded-2xl p-5 border-l-4 border-l-pwc-orange"><div class="text-xs font-semibold text-pwc-grey uppercase tracking-wider mb-1">Top ranked</div><div id="kpiTopCandidate" class="text-xl font-bold truncate mt-1">—</div><div class="mt-2"><span id="kpiTopScore" class="px-2 py-0.5 rounded bg-pwc-light text-pwc-burgundy text-xs font-bold">0% match</span></div></div>
+      <div class="glass-card rounded-2xl p-5 border-l-4 border-l-pwc-charcoal"><div class="text-xs font-semibold text-pwc-grey uppercase tracking-wider mb-1">Optimal qualification</div><div id="kpiOptimalCount" class="text-2xl font-bold mt-1 num">0 / 0</div><p class="text-xs text-pwc-grey mt-2">Calibrated to role level</p></div>
+      <div class="glass-card rounded-2xl p-5 border-l-4 border-l-pwc-yellow"><div class="text-xs font-semibold text-pwc-grey uppercase tracking-wider mb-1">Over-qualified</div><div id="kpiOverCount" class="text-2xl font-bold mt-1 num">0</div><p class="text-xs text-pwc-grey mt-2">Salary premium / retention risk</p></div>
+      <div class="glass-card rounded-2xl p-5 border-l-4 border-l-pwc-rose"><div class="text-xs font-semibold text-pwc-grey uppercase tracking-wider mb-1">Under-qualified</div><div id="kpiUnderCount" class="text-2xl font-bold mt-1 num">0</div><p class="text-xs text-pwc-grey mt-2">Needs upskilling investment</p></div>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div class="lg:col-span-7 glass-card rounded-2xl p-6">
+        <h3 class="text-base font-bold">JD match score by candidate</h3><p class="text-xs text-pwc-grey mb-3">Bars coloured by qualification tier</p>
+        <div class="relative h-64 w-full"><canvas id="overviewBarChart" role="img" aria-label="Bar chart of JD match score per candidate"></canvas></div>
+      </div>
+      <div class="lg:col-span-5 glass-card rounded-2xl p-6 flex flex-col justify-between">
+        <div><h3 class="text-base font-bold mb-1">Talent pool calibration</h3><p class="text-xs text-pwc-grey mb-3">Distribution by qualification tier</p>
+          <div class="relative h-44 w-full"><canvas id="tierDoughnutChart" role="img" aria-label="Doughnut chart of qualification tiers"></canvas></div></div>
+        <div class="mt-4 p-3.5 rounded-xl bg-pwc-light border border-pwc-line text-xs leading-relaxed"><strong class="text-pwc-burgundy block mb-1">Recommendation & rationale</strong><span id="executiveSummaryText">Run a screening to see the synthesised summary.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="rp-ranking" class="hidden space-y-6">
+    <div class="glass-card rounded-2xl p-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+        <div><h3 class="font-serif text-lg font-bold">Final candidate ranking</h3><p class="text-xs text-pwc-grey">Optimal-fit candidates first, then by JD match score. Expand a row to see exactly why.</p></div>
+        <span id="engineBadge" class="self-start px-2.5 py-1 rounded-full border text-[11px] font-semibold bg-gray-100 text-pwc-slate border-gray-200"></span>
+      </div>
+      <ol id="rankingList"></ol>
+    </div>
+    <div>
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <div><h3 class="font-serif text-lg font-bold">Ranked candidate shortlist</h3><p class="text-xs text-pwc-grey">Open a candidate's full assessment or benchmark them against peers</p></div>
+        <div class="flex flex-wrap gap-1.5" id="qualificationFilters">
+          <button onclick="filterCandidates('ALL')" class="filter-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-pwc-charcoal text-white">All</button>
+          <button onclick="filterCandidates('Optimal Fit')" class="filter-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-pwc-line text-pwc-slate hover:border-pwc-orange">Optimal Fit</button>
+          <button onclick="filterCandidates('Over-Qualified')" class="filter-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-pwc-line text-pwc-slate hover:border-pwc-orange">Over-Qualified</button>
+          <button onclick="filterCandidates('Under-Qualified')" class="filter-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-pwc-line text-pwc-slate hover:border-pwc-orange">Under-Qualified</button>
+        </div>
+      </div>
+      <div id="candidateCardsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-5"></div>
+    </div>
+  </div>
+
+  <div id="rp-benchmark" class="hidden space-y-6">
+    <div class="glass-card rounded-2xl p-6">
+      <div class="flex flex-col md:flex-row md:items-start justify-between gap-3 mb-4">
+        <div><span class="eyebrow">Reports & Analytics</span><h3 class="font-serif text-xl font-bold">Competency Benchmarking</h3>
+          <p class="text-xs text-pwc-grey max-w-2xl">Target JD benchmark (100 on every dimension) versus selected candidates, using evidence-based scores from the screening engine.</p></div>
+        <div class="flex gap-2"><button onclick="exportBenchmarkPDF()" class="px-3.5 py-2 rounded-lg bg-pwc-orange hover:bg-pwc-burgundy text-black hover:text-white text-xs font-bold">Download PDF</button>
+          <button onclick="exportBenchmarkExcel()" class="px-3.5 py-2 rounded-lg border border-pwc-charcoal text-xs font-bold hover:bg-pwc-charcoal hover:text-white">Download Excel</button></div>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-3">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-pwc-slate mb-2">Candidates (up to 8)</h4>
+          <div id="benchPicker" role="group" aria-label="Candidates to compare" class="space-y-1.5 max-h-80 overflow-y-auto pr-1"></div>
+          <div class="flex gap-2 mt-3"><button onclick="benchSelectTop(5)" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-pwc-line hover:border-pwc-orange">Top 5</button><button onclick="benchClear()" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-pwc-line hover:border-pwc-orange">Clear</button></div>
+        </div>
+        <div class="lg:col-span-9">
+          <div class="relative h-[420px] w-full"><canvas id="benchRadar" role="img" aria-label="Radar chart comparing selected candidates with the JD benchmark across five competency dimensions. The data is repeated in the table below."></canvas></div>
+          <p id="benchNote" class="text-xs text-pwc-grey mt-2"></p>
+        </div>
+      </div>
+    </div>
+    <div class="glass-card rounded-2xl p-6"><h4 class="font-serif text-lg font-bold mb-1">Competency gap analysis</h4><p class="text-xs text-pwc-grey mb-4">Points below the JD benchmark (100). Dimensions without enough evidence are flagged, not scored as zero.</p><div id="benchGap" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div></div>
+    <div class="glass-card rounded-2xl p-6"><h4 class="font-serif text-lg font-bold mb-3">Strongest, weakest and average competency</h4><div id="benchHighlights" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div></div>
+    <div class="glass-card rounded-2xl p-6">
+      <h4 class="font-serif text-lg font-bold mb-3">Competency comparison table</h4>
+      <div class="overflow-x-auto rounded-xl border border-pwc-line"><table class="min-w-full text-left text-xs" id="benchTable"></table></div>
+      <div class="mt-6"><h5 class="text-sm font-bold mb-2">Candidate-to-candidate comparison</h5>
+        <div class="flex flex-wrap items-end gap-3 mb-3"><div><label for="benchA" class="block text-[11px] font-bold uppercase text-pwc-grey">Candidate A</label><select id="benchA" onchange="renderBenchAB()" class="px-3 py-1.5 rounded-lg border border-pwc-line text-xs font-semibold bg-white"></select></div>
+          <span class="text-xs font-bold text-pwc-grey pb-2">vs</span>
+          <div><label for="benchB" class="block text-[11px] font-bold uppercase text-pwc-grey">Candidate B</label><select id="benchB" onchange="renderBenchAB()" class="px-3 py-1.5 rounded-lg border border-pwc-line text-xs font-semibold bg-white"></select></div></div>
+        <div id="benchAB" class="text-xs"></div></div>
+    </div>
+    <div class="glass-card rounded-2xl p-6"><div id="weightsPanel"></div>
+      <details class="mt-4 rounded-xl border border-pwc-line p-4 text-xs text-pwc-slate"><summary class="cursor-pointer font-bold text-pwc-charcoal">Scoring methodology</summary><div id="methodologyBody" class="mt-3 space-y-2 leading-relaxed"></div></details></div>
+  </div>
+
+  <div id="rp-fincmp" class="hidden space-y-6">
+    <div class="glass-card rounded-2xl p-6">
+      <div class="flex flex-col md:flex-row md:items-start justify-between gap-3 mb-4">
+        <div><span class="eyebrow">Reports & Analytics</span><h3 class="font-serif text-xl font-bold">Financial comparison (PKR)</h3>
+          <p class="text-xs text-pwc-grey max-w-2xl">Side-by-side hiring economics from the Cost-Benefit inputs saved for each candidate. Candidates without salary inputs show “—”.</p></div>
+        <div class="flex gap-2"><button onclick="exportFinancialPDF()" class="px-3.5 py-2 rounded-lg bg-pwc-orange hover:bg-pwc-burgundy text-black hover:text-white text-xs font-bold">Download PDF</button>
+          <button onclick="exportFinancialExcel()" class="px-3.5 py-2 rounded-lg border border-pwc-charcoal text-xs font-bold hover:bg-pwc-charcoal hover:text-white">Download Excel</button></div>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-3"><h4 class="text-xs font-bold uppercase tracking-wider text-pwc-slate mb-2">Candidates to compare</h4><div id="finPicker" role="group" aria-label="Candidates to compare" class="space-y-1.5 max-h-72 overflow-y-auto pr-1"></div>
+          <div class="grid grid-cols-2 gap-2 mt-3"><div><label for="finSortKey" class="block text-[11px] font-bold uppercase text-pwc-grey">Sort by</label><select id="finSortKey" onchange="renderFinCompare()" class="w-full px-2 py-1.5 rounded-lg border border-pwc-line text-xs font-semibold bg-white"><option value="roi">ROI</option><option value="recruitCost">Recruitment cost</option><option value="variance">Salary variance</option><option value="rank">Screening rank</option></select></div>
+            <div><label for="finSortDir" class="block text-[11px] font-bold uppercase text-pwc-grey">Order</label><select id="finSortDir" onchange="renderFinCompare()" class="w-full px-2 py-1.5 rounded-lg border border-pwc-line text-xs font-semibold bg-white"><option value="desc">High → low</option><option value="asc">Low → high</option></select></div></div></div>
+        <div class="lg:col-span-9"><div class="overflow-x-auto rounded-xl border border-pwc-line"><table class="min-w-full text-left text-xs" id="finCmpTable"></table></div>
+          <div class="mt-3 p-3.5 rounded-xl bg-pwc-light border border-pwc-line text-xs text-pwc-slate leading-relaxed"><strong>Read with care:</strong> the revenue multiplier is an assumption-based scenario, not measured productivity. The highest ROI is not automatically the best hire; weigh it against competency fit and mandatory requirements shown alongside.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="bg-white border-t border-pwc-line mt-12">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-pwc-grey">
+    <div class="flex items-center gap-2.5"><img src="logo.png" alt="" class="h-6 w-auto object-contain" onerror="this.style.display='none'"><span>© 2026 TalentLens. AI-assisted screening supports, and does not replace, recruiter judgement.</span></div>
+    <div>Not an officially endorsed PwC product unless separately approved.</div>
+  </div>
+</footer>
+
+<script>
+// =========================================================================
+// TALENTLENS: CORE (config, state, storage, helpers, navigation)
+// =========================================================================
+const ANALYZE_ENDPOINT = '/api/analyze';          // Cloudflare Worker / Pages Function (key stays server-side)
+const YEAR_NOW = new Date().getFullYear();
+const MAX_BENCH = 8;
+
+const DIMENSIONS = [
+  { key: 'domain', label: 'Domain & Technical Fit', basis: 'technical skills, domain knowledge, relevant tools and systems, industry knowledge' },
+  { key: 'responsibility', label: 'Role Responsibility Alignment', basis: 'previous responsibilities, similarity of past roles, relevant tasks and deliverables, alignment with JD responsibilities' },
+  { key: 'leadership', label: 'Leadership & Ownership', basis: 'team management, stakeholder management, decision-making, project ownership, leadership experience' },
+  { key: 'delivery', label: 'Delivery & Execution Depth', basis: 'completed projects, implementation experience, operational delivery, measurable achievements, complexity of responsibilities' },
+  { key: 'qualification', label: 'Qualification Calibration', basis: 'education, professional certifications, professional memberships, qualification level required by the JD' }
+];
+const SERIES_COLORS = ['#0072B2', '#009E73', '#CC79A7', '#56B4E9', '#2D2D2D', '#7B3FA0', '#00A6A6', '#8C564B'];
+const SERIES_POINTS = ['circle', 'triangle', 'rect', 'rectRot', 'cross', 'star', 'crossRot', 'circle'];
+
+const state = {
+  jdText: '', jobId: '', uploadedCVs: [], analysisResult: null, activeFilter: 'ALL',
+  tab: 'intake', reportTab: 'overview', assessTab: 'overview', assessId: null, cbaId: null,
+  bench: { selected: [] }, fin: { selected: [] }, role: 'recruiter',
+  charts: { bar: null, doughnut: null, bench: null }
+};
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const $ = id => document.getElementById(id);
+const icons = () => { if (typeof lucide !== 'undefined') lucide.createIcons(); };
+const nf = n => Math.round(n).toLocaleString('en-US');
+const fmtPKR = n => (n == null || !Number.isFinite(n)) ? '—' : (n < 0 ? '-' : '') + 'PKR ' + nf(Math.abs(n));
+const fmtSigned = (n, d = 1) => (n == null || !Number.isFinite(n)) ? '—' : (n > 0 ? '+' : '') + n.toFixed(d) + '%';
+const clamp = (n, lo = 0, hi = 100) => Math.max(lo, Math.min(hi, n));
+
+function hashStr(s) { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36).toUpperCase().padStart(6, '0'); }
+const makeCandId = cv => 'C-' + hashStr(cv.fileName + '|' + cv.text.length + '|' + cv.text.slice(0, 300)).slice(0, 6);
+const makeJobId = (title, jd) => 'J-' + hashStr(title + '|' + jd.slice(0, 500)).slice(0, 6);
+
+// Storage adapter: swap this object for API calls (Worker + D1/KV/Supabase) to persist server-side.
+const Store = {
+  get(k, d = null) { try { const v = localStorage.getItem('talentlens:' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('talentlens:' + k, JSON.stringify(v)); return true; } catch (e) { return false; } },
+  del(k) { try { localStorage.removeItem('talentlens:' + k); } catch (e) { /* ignore */ } }
+};
+
+function showToast(message, type = 'info') {
+  const c = $('toastContainer'); if (!c) return;
+  const colors = { success: 'bg-emerald-900 border-emerald-700', error: 'bg-pwc-burgundy border-red-800', warning: 'bg-amber-900 border-amber-700', info: 'bg-pwc-charcoal border-gray-700' };
+  const t = document.createElement('div');
+  t.className = `pointer-events-auto px-4 py-3 rounded-xl shadow-lg border text-xs font-medium text-white animate-slide-up ${colors[type] || colors.info}`;
+  t.textContent = message; c.appendChild(t);
+  setTimeout(() => { t.style.transition = 'opacity .3s'; t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 5000);
+}
+
+const cands = () => (state.analysisResult ? state.analysisResult.candidates : []);
+const candById = id => cands().find(c => c.id === id) || null;
+
+function setTabButton(btn, on) {
+  btn.classList.toggle('active', on); btn.setAttribute('aria-selected', on ? 'true' : 'false');
+  btn.classList.toggle('text-pwc-charcoal', on); btn.classList.toggle('font-bold', on);
+  btn.classList.toggle('text-pwc-grey', !on); btn.classList.toggle('font-medium', !on);
+}
+
+function switchTab(tabId) {
+  if (tabId !== 'intake' && !state.analysisResult) { showToast('Import a JD and CVs, then run the screening first.', 'warning'); return; }
+  state.tab = tabId;
+  ['intake', 'assessment', 'cba', 'reports'].forEach(id => {
+    const v = $(`view-${id}`), b = $(`tab-${id}`); if (!v || !b) return;
+    v.classList.toggle('hidden', id !== tabId); setTabButton(b, id === tabId);
+  });
+  if (tabId === 'assessment') renderAssessment();
+  if (tabId === 'cba') renderCBATab();
+  if (tabId === 'reports') renderReports();
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  icons(); setupDragAndDrop(); renderCVQueue(); checkAIStatus();
+  $('jdTextInput').addEventListener('input', e => { state.jdText = e.target.value; $('jdCharCount').innerText = `${e.target.value.length.toLocaleString()} chars`; });
+  if (typeof pdfjsLib !== 'undefined') pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+});
+
+// ---------- Drag & drop + JD import ----------
+async function handleJDUpload(event) {
+  const file = event.target.files[0]; if (!file) return;
+  try {
+    showToast(`Extracting text from ${file.name}...`);
+    const p = await parseDocumentFile(file, msg => showToast(msg));
+    if (!p.text || p.text.length < 15) throw new Error('Could not read text from this file. Paste the JD text instead.');
+    state.jdText = p.text; $('jdTextInput').value = p.text; $('jdCharCount').innerText = `${p.text.length.toLocaleString()} chars`;
+    $('jdFileName').innerText = file.name; $('jdFileBadge').classList.remove('hidden');
+    if (!$('jobTitleInput').value) $('jobTitleInput').value = file.name.replace(/\.[^/.]+$/, '').replace(/[_-]/g, ' ');
+    showToast('Job Description imported.', 'success');
+  } catch (err) { showToast(err.message || 'Failed to parse JD.', 'error'); }
+  event.target.value = '';
+}
+function clearJD() { state.jdText = ''; $('jdTextInput').value = ''; $('jdFileBadge').classList.add('hidden'); $('jdCharCount').innerText = '0 chars'; }
+function setupDragAndDrop() {
+  const z = $('cvDropZone'); if (!z) return;
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(n => z.addEventListener(n, e => { e.preventDefault(); e.stopPropagation(); }));
+  z.addEventListener('dragover', () => z.classList.add('border-pwc-orange'));
+  z.addEventListener('dragleave', () => z.classList.remove('border-pwc-orange'));
+  z.addEventListener('drop', e => { z.classList.remove('border-pwc-orange'); if (e.dataTransfer?.files?.length) handleCVFiles(e.dataTransfer.files); });
+}
+
+
+// ---------- Parsing helpers (names, work history, education) + data checks ----------
+const NAME_BLOCK = /\b(bsc|b\.sc|msc|m\.sc|mba|phd|bachelor|bachelors|master|masters|degree|diploma|engineering|engineer|computer|systems|science|sciences|technology|technologist|executive|officer|manager|director|architect|consultant|analyst|developer|specialist|head|chief|president|vp|lead|resume|curriculum|vitae|cv|profile|summary|contact|experience|education|skills|objective|enterprise|professional|senior|junior|cross|industry|leadership|karachi|lahore|islamabad|dubai|pakistan|university|college|institute|limited|ltd|inc|corp|company|address|email|phone|mobile|linkedin|page|cto|cio|ceo|cfo)\b/i;
+const MONTH_PAT = '(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\\.?,?\\s+';
+const DATE_RANGE_RE = new RegExp('((?:' + MONTH_PAT + ')?(?:19|20)\\d{2})\\s*(?:[-–—]|\\bto\\b|\\buntil\\b)\\s*((?:' + MONTH_PAT + ')?(?:19|20)\\d{2}|present|current|now|till date|to date|ongoing)', 'i');
+const TITLE_RE = /(engineer|architect|manager|director|lead\b|consultant|analyst|developer|specialist|officer|\bhead\b|\bvp\b|president|designer|scientist|accountant|recruiter|administrator|executive|associate|advisor|supervisor|coordinator|technician|programmer|\bcto\b|\bcio\b|\bceo\b|\bcfo\b|chief|partner|principal|intern\b|trainee|owner|founder|technologist)/i;
+const ORG_RE = /\b(ltd|limited|inc|llc|llp|corp|corporation|company|co\.|pvt|private|bank|group|university|systems|technologies|solutions|industries|holdings|services|authority|ministry|telecom|foods|consulting|partners|associates|enterprises|international|global|labs)\b/i;
+const LOC_TAIL = /,?\s*\(?(karachi|lahore|islamabad|rawalpindi|dubai|abu dhabi|riyadh|jeddah|doha|pakistan|uae|saudi arabia|usa|uk|london|new york|singapore|remote)\b.*$/i;
+const END_HEAD_RE = /^(education|academic|qualifications?|skills|technical skills|core competenc|certifications?|training|projects|references|awards|languages|interests|publications|achievements|courses)/i;
+const EXP_HEAD_RE = /^((professional|work|employment|career) )?(experience|history)( summary)?$|^employment( history)?$|^career (history|summary)$|^work history$/i;
+const NARR_RE = /^(led|lead|managed|built|designed|developed|delivered|architected|implemented|drove|launched|owned|created|directed|oversaw|reduced|increased|improved|deployed|migrated|engineered|established|negotiated|coordinated|analy[sz]ed|presented|mentored|spearheaded|executed|optimi[sz]ed|automated|maintained|supported|assisted|advised|responsible|worked|handled|used|provided|ensured|prepared|conducted|performed|served|collaborated|achieved|generated)\b/i;
+const headNorm = l => l.replace(/[:\s]+$/, '');
+
+function splitUnits(t) {
+  const lineMode = (t.match(/\n/g) || []).length >= 5;   // real CVs keep their line breaks; do NOT split on "." (B.Sc. / M.Sc.)
+  const parts = lineMode ? t.split(/\n|[•▪●◦]/) : t.split(/\n|[•▪●◦]|(?<=[.!?])\s+(?=[A-Z])/);
+  return parts.map(s => s.replace(/^[\s\-–*·]+/, '').trim()).filter(s => s.length > 5);
+}
+const cleanLine = l => l.replace(/^[\s•▪●◦·*\-–]+/, '').trim();
+
+function extractName(cv, segs) {
+  const fileGuess = cv.fileName.replace(/\.[^/.]+$/, '').replace(/[_\-.]+/g, ' ').replace(/\b(cv|resume|curriculum|vitae|final|updated|new|copy|\d+)\b/gi, '').replace(/\s+/g, ' ').trim();
+  const fileTokens = fileGuess.toLowerCase().split(' ').filter(t => t.length > 2);
+  const looksName = s => {
+    if (s.length < 5 || s.length > 40 || /[\d@:\/]/.test(s) || NAME_BLOCK.test(s)) return false;
+    const w = s.split(/\s+/);
+    return w.length >= 2 && w.length <= 4 && w.every(x => /^[A-Z][A-Za-z'’.-]*$/.test(x));
+  };
+  const cands = segs.slice(0, 25).filter(looksName);
+  const fileOk = fileTokens.length >= 2 && fileTokens.length <= 4 && fileTokens.every(t => /^[a-z'’-]+$/.test(t)) && !NAME_BLOCK.test(fileGuess);
+  const match = cands.find(s => fileTokens.some(t => s.toLowerCase().includes(t)));
+  let pick = match || (fileOk ? fileGuess : cands[0]);
+  if (!pick) return fileGuess || cv.fileName;
+  return pick === pick.toUpperCase() || pick === pick.toLowerCase() ? titleCase(pick.toLowerCase()) : pick;
+}
+
+function splitHeader(l) {
+  return l.split(/\s+[|@–—]\s+|\s+-\s+|\s+at\s+|\s*\|\s*/).flatMap(p => {
+    const c = p.split(/,\s+/);
+    return (c.length === 2 && ((TITLE_RE.test(c[0]) && !TITLE_RE.test(c[1]) && ORG_RE.test(c[1])) || (ORG_RE.test(c[0]) && !TITLE_RE.test(c[0]) && TITLE_RE.test(c[1])))) ? c : [p];
+  }).map(x => x.trim()).filter(x => x.length > 1);
+}
+function classifyHeader(lines) {
+  const parts = lines.flatMap(splitHeader);
+  const role = parts.find(p => TITLE_RE.test(p) && p.length <= 90) || '';
+  let company = parts.find(p => p !== role && ORG_RE.test(p) && !TITLE_RE.test(p)) || parts.find(p => p !== role && !TITLE_RE.test(p) && p.length <= 70) || '';
+  company = company.replace(LOC_TAIL, '').trim();
+  return { role, company };
+}
+
+function extractWorkHistory(text) {
+  const raw = text.split('\n').map(s => s.trim()).filter(Boolean);
+  const isBullet = l => /^[•▪●◦·*\-–]\s*\S/.test(l);
+  let lines = raw;
+  const s = raw.findIndex(l => l.length < 45 && EXP_HEAD_RE.test(headNorm(l)));
+  if (s >= 0) {
+    const e = raw.findIndex((l, i) => i > s && l.length < 45 && END_HEAD_RE.test(headNorm(l)));
+    lines = raw.slice(s + 1, e < 0 ? raw.length : e);
+  } else {
+    const es = raw.findIndex(l => l.length < 45 && /^(education|academic)/i.test(headNorm(l)));
+    if (es >= 0) {
+      const ee = raw.findIndex((l, i) => i > es && l.length < 45 && END_HEAD_RE.test(headNorm(l)) && !/^(education|academic)/i.test(l));
+      lines = raw.filter((l, i) => i < es || (ee >= 0 && i >= ee));
+    }
+  }
+  const okHead = l => l && !isBullet(l) && !DATE_RANGE_RE.test(l) && !NARR_RE.test(l) && !/[.;]$/.test(l) && l.length <= 90 && l.split(/\s+/).length <= 14;
+  const dateIdx = lines.map((l, i) => DATE_RANGE_RE.test(l) ? i : -1).filter(i => i >= 0);
+  const out = [];
+  dateIdx.forEach((i, k) => {
+    const line = lines[i];
+    if (isBullet(line) && line.length > 90) return;                     // narrative bullet that merely mentions dates
+    const m = line.match(DATE_RANGE_RE);
+    const tenure = m[0].replace(/\s+/g, ' ').trim();
+    const rest = line.replace(m[0], ' ').replace(/[()\[\]]/g, ' ').replace(/^[\s|,:;–—-]+|[\s|,:;–—-]+$/g, '').replace(/\s{2,}/g, ' ');
+    const lower = k > 0 ? dateIdx[k - 1] : -1, upper = k < dateIdx.length - 1 ? dateIdx[k + 1] : lines.length;
+    const above = [], below = [];
+    for (let j = i - 1; j > lower && above.length < 2 && okHead(lines[j]); j--) above.unshift(lines[j]);
+    for (let j = i + 1; j < upper && below.length < 2 && okHead(lines[j]); j++) below.push(lines[j]);
+    let hdr;
+    if (!rest) hdr = below.length ? below : above;
+    else {
+      hdr = [rest];
+      let c = classifyHeader(hdr);
+      if (!c.role || !c.company) hdr = [rest, ...(below.length ? below.slice(0, 1) : above.slice(-1))];
+    }
+    const { role, company } = classifyHeader(hdr);
+    if (!role && !company) return;
+    let keySummary = '';
+    for (let j = i + 1; j < upper && j < i + 6; j++) { if (isBullet(lines[j]) || (lines[j].length > 40 && !hdr.includes(lines[j]))) { keySummary = cleanLine(lines[j]).slice(0, 160); break; } }
+    if (!out.some(o => o.tenure === tenure && o.roleTitle === role)) out.push({ roleTitle: role, companyName: company, tenure, keySummary });
+  });
+  return out.slice(0, 8);
+}
+
+function extractEducation(text) {
+  const raw = text.split('\n').map(s => s.trim()).filter(Boolean);
+  const lines = raw.length < 5 ? splitUnits(text) : raw;
+  const sect = (headRe) => {
+    const st = lines.findIndex(l => l.length < 45 && headRe.test(headNorm(l)));
+    if (st < 0) return [];
+    const en = lines.findIndex((l, i) => i > st && l.length < 45 && END_HEAD_RE.test(headNorm(l)));
+    return lines.slice(st + 1, en < 0 ? lines.length : en).map(cleanLine).filter(l => l.length > 4 && l.length < 160);
+  };
+  const edu = sect(/^(education|academic( background)?|qualifications?)$/i);
+  const cert = sect(/^(certifications?|professional certifications?|training|courses)$/i);
+  if (edu.length || cert.length) return [...edu.slice(0, 5), ...cert.slice(0, 4)];
+  const re = /\b(bachelor|b\.?\s?sc|b\.?\s?eng|b\.?\s?tech|master|m\.?\s?sc|mba|m\.?\s?phil|ph\.?\s?d|diploma|post ?graduate|\(hons\)|degree|certified|certification|pmp|cissp|cisa|itil|prince2|ccna|ccie)\b/i;
+  return lines.map(cleanLine).filter(l => re.test(l) && l.length < 160).slice(0, 6);
+}
+
+function tenureSpan(wh) {
+  const ys = [];
+  wh.forEach(w => {
+    const m = String(w.tenure || '').match(/(?:19|20)\d{2}/g);
+    if (m) { ys.push(+m[0]); ys.push(m[1] ? +m[1] : (/(present|current|now|date|ongoing)/i.test(w.tenure) ? YEAR_NOW : +m[0])); }
+  });
+  return ys.length ? Math.max(...ys) - Math.min(...ys) : 0;
+}
+
+// Cross-checks every parsed/AI field against the CV text. Never silently trusts model output.
+function validateCandidate(c, cv) {
+  const warns = [];
+  const text = (cv && cv.text) ? cv.text : '';
+  const norm = s => String(s || '').toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+  const nt = ' ' + norm(text) + ' ';
+  const has = s => { const w = norm(s).split(' ').filter(x => x.length > 2); return w.length > 0 && w.filter(x => nt.includes(x)).length / w.length >= 0.6; };
+  const real = s => s && !/not stated/i.test(s);
+
+  // 1) Candidate name must be a person name, not a degree / job title / heading
+  if (!c.name || NAME_BLOCK.test(c.name) || /[\d@_]|\.(pdf|docx?|txt)$/i.test(c.name)) {
+    const fixed = cv ? extractName(cv, text.split(/\n|\|/).map(x => x.trim()).filter(Boolean)) : '';
+    warns.push(`Name "${c.name}" looked like a title/degree; replaced with "${fixed}".`);
+    if (fixed) c.name = fixed;
+  } else if (cv && text.length > 50 && !has(c.name) && !norm(cv.fileName).includes(norm(c.name).split(' ')[0])) {
+    warns.push('Name not found in CV text or file name.');
+  }
+
+  // 2) Work history: drop junk, verify company / role / dates against the CV
+  c.workHistory = c.workHistory.filter(w => w && (w.roleTitle || w.companyName) && !/^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?$/i.test(String(w.roleTitle || '').trim()));
+  if (text.length > 50) {
+    let bad = 0;
+    c.workHistory.forEach(w => {
+      const yrs = String(w.tenure || '').match(/(?:19|20)\d{2}/g) || [];
+      w.verified = (!real(w.companyName) || has(w.companyName)) && (!real(w.roleTitle) || has(w.roleTitle)) && yrs.every(y => nt.includes(y));
+      if (!w.verified) bad++;
+    });
+    if (bad) warns.push(`${bad} of ${c.workHistory.length} work-history entries could not be matched to the CV text; verify manually.`);
+  }
+  const noCo = c.workHistory.filter(w => !real(w.companyName)).length;
+  if (noCo) warns.push(`${noCo} work-history entr${noCo === 1 ? 'y has' : 'ies have'} no company name detected.`);
+  if (!c.workHistory.length && text.length > 200) warns.push('No work history could be detected.');
+
+  // 3) Stated years of experience vs. span of dated roles
+  const span = tenureSpan(c.workHistory);
+  if (span && c.yearsExperience && Math.abs(span - c.yearsExperience) > 6) warns.push(`Stated ${c.yearsExperience} yrs experience differs from ${span} yrs implied by dated roles.`);
+  c.checks = warns;
+  return warns;
+}
+
+
+// ---------- CV reading pipeline: layout-aware PDF text, OCR for scans/images, structured DOCX ----------
+function normalizeCVText(t) {
+  return String(t || '')
+    .replace(/\u00a0/g, ' ').replace(/[\u200b-\u200d\ufeff]/g, '')
+    .replace(/ﬁ/g, 'fi').replace(/ﬂ/g, 'fl').replace(/ﬀ/g, 'ff').replace(/ﬃ/g, 'ffi').replace(/ﬄ/g, 'ffl')
+    .replace(/[\u2023\u25E6\u2043\u2219\uF0B7\uF0A7\uF076\u25AA\u25CF\u25A0\u2756\u25BA\u27A2]/g, '•')   // bullets, incl. symbol-font private-use bullets
+    .replace(/\r/g, '').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n')
+    .split('\n').filter(l => !/^\s*(page\s+\d+(\s+of\s+\d+)?|\d+\s*\/\s*\d+)\s*$/i.test(l)).join('\n').trim();
+}
+
+// Finds a vertical gutter (two-column / sidebar layouts) so columns are read one after the other, not interleaved.
+function detectColumns(items, pageW) {
+  if (items.length < 40) return [items];
+  const bins = new Array(100).fill(0);
+  items.forEach(it => {
+    if (it.w > pageW * 0.5) return;                       // full-width lines (name banner, rules) don't count as column content
+    const a = Math.max(0, Math.floor(it.x / pageW * 100)), b = Math.min(99, Math.floor((it.x + it.w) / pageW * 100));
+    for (let k = a; k <= b; k++) bins[k]++;
+  });
+  const limit = items.length * 0.02;
+  let best = null, run = null;
+  for (let k = 18; k <= 62; k++) {
+    if (bins[k] <= limit) { run = run ? { s: run.s, e: k } : { s: k, e: k }; if (!best || run.e - run.s > best.e - best.s) best = { ...run }; }
+    else run = null;
+  }
+  if (!best || best.e - best.s < 1) return [items];
+  const splitX = ((best.s + best.e + 1) / 2) / 100 * pageW;
+  const left = items.filter(it => it.x + it.w / 2 < splitX), right = items.filter(it => it.x + it.w / 2 >= splitX);
+  if (left.length < items.length * 0.15 || right.length < items.length * 0.15) return [items];
+  const span = a => Math.max(...a.map(i => i.x + i.w)) - Math.min(...a.map(i => i.x));
+  return span(left) >= span(right) ? [left, right] : [right, left];   // main content first, sidebar after
+}
+
+// Pure function: text items {str,x,y,w,h} -> readable lines. (Unit-testable without pdf.js)
+function itemsToText(items, pageW) {
+  if (!items.length) return '';
+  const hs = items.map(i => i.h).filter(h => h > 0).sort((a, b) => a - b);
+  const medH = hs.length ? hs[Math.floor(hs.length / 2)] : 10;
+  const renderCol = list => {
+    const sorted = [...list].sort((a, b) => b.y - a.y || a.x - b.x);
+    const lines = []; let cur = null;
+    for (const it of sorted) {
+      const tol = Math.max(2.5, Math.min(it.h || medH, medH) * 0.45);
+      if (cur && Math.abs(it.y - cur.y) <= tol) cur.items.push(it);
+      else { cur = { y: it.y, items: [it] }; lines.push(cur); }
+    }
+    const out = lines.map(ln => {
+      const its = ln.items.sort((a, b) => a.x - b.x);
+      let txt = '', prevEnd = null;
+      for (const it of its) {
+        if (prevEnd !== null) {
+          const gap = it.x - prevEnd, h = it.h || medH;
+          if (gap > h * 2.5) txt += ' | ';                                       // column gap, e.g. right-aligned dates
+          else if (gap > h * 0.12 && !/\s$/.test(txt) && !/^\s/.test(it.str)) txt += ' ';
+        }
+        txt += it.str; prevEnd = it.x + it.w;
+      }
+      const big = its.every(i => (i.h || 0) >= medH * 1.2);
+      return { y: ln.y, text: txt.replace(/\s+/g, ' ').replace(/\s*\|\s*$/, '').trim(), heading: big };
+    }).filter(l => l.text);
+    // join wrapped continuation lines (a lowercase start right under a long line) back into one bullet/sentence
+    const merged = [];
+    for (const l of out) {
+      const prev = merged[merged.length - 1];
+      if (prev && !l.heading && (/^[a-z(,;]/.test(l.text) || (/^\d/.test(l.text) && /(\b(of|and|to|for|with|the|in|on|by|a|an|or|from|across)|,)$/i.test(prev.text))) && prev.text.length > 15 && (prev.y - l.y) < medH * 2.1 && !DATE_RANGE_RE.test(l.text)) { prev.text += ' ' + l.text; prev.y = l.y; }
+      else merged.push({ ...l });
+    }
+    return merged.map(l => (l.heading ? '\n' : '') + l.text).join('\n');
+  };
+  return detectColumns(items, pageW).map(renderCol).join('\n');
+}
+
+function loadScriptOnce(src) {
+  return new Promise((res, rej) => {
+    if (document.querySelector(`script[src="${src}"]`)) return res();
+    const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('Could not load OCR engine')); document.head.appendChild(s);
+  });
+}
+async function ocrCanvas(canvas) {
+  if (typeof Tesseract === 'undefined') await loadScriptOnce('https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js');
+  const { data } = await Tesseract.recognize(canvas, 'eng');
+  return data.text || '';
+}
+async function ocrPdfPage(page) {
+  try {
+    const vp = page.getViewport({ scale: 2.2 });
+    const canvas = document.createElement('canvas'); canvas.width = vp.width; canvas.height = vp.height;
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+    return await ocrCanvas(canvas);
+  } catch (e) { console.warn('OCR failed:', e); return ''; }
+}
+
+async function extractPdf(buffer, onStatus) {
+  if (typeof pdfjsLib === 'undefined') throw new Error('PDF parser is still loading. Try again in a moment.');
+  const pdf = await pdfjsLib.getDocument({ data: buffer, useSystemFonts: true }).promise;
+  const pages = []; let ocrPages = 0;
+  for (let i = 1; i <= pdf.numPages && i <= 12; i++) {
+    const page = await pdf.getPage(i);
+    const vp = page.getViewport({ scale: 1 });
+    const tc = await page.getTextContent();
+    const items = tc.items.filter(it => it.str && it.str.trim()).map(it => ({ str: it.str, x: it.transform[4], y: it.transform[5], w: it.width || 0, h: Math.abs(it.transform[3]) || it.height || 10 }));
+    let text = itemsToText(items, vp.width);
+    if (text.replace(/\s/g, '').length < 80) {          // no usable text layer on this page -> OCR it
+      if (onStatus) onStatus(`Page ${i} looks scanned: running OCR (can take up to a minute)...`);
+      const o = await ocrPdfPage(page);
+      if (o.trim()) { text = o; ocrPages++; }
+    }
+    pages.push(text);
+  }
+  return { text: normalizeCVText(pages.join('\n\n')), ocrPages };
+}
+
+async function renderPdfFirstPageAsBase64(buf) {
+  try {
+    const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+    const page = await pdf.getPage(1);
+    const vp = page.getViewport({ scale: 1.5 });
+    const canvas = document.createElement('canvas'); canvas.width = vp.width; canvas.height = vp.height;
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+    return canvas.toDataURL('image/jpeg', 0.82).split(',')[1];
+  } catch (e) { return null; }
+}
+
+async function extractDocx(buffer) {
+  if (typeof mammoth === 'undefined') throw new Error('Word parser unavailable. Check your connection.');
+  const raw = (await mammoth.extractRawText({ arrayBuffer: buffer.slice(0) })).value || '';
+  try {   // structured pass keeps tables (very common in CV templates), lists and line breaks
+    const html = (await mammoth.convertToHtml({ arrayBuffer: buffer.slice(0) })).value;
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const lines = [];
+    const plain = h => { const d = document.createElement('div'); d.innerHTML = h; return d.textContent.trim(); };
+    const walk = node => {
+      for (const el of node.children) {
+        const tag = el.tagName.toLowerCase();
+        if (tag === 'table') el.querySelectorAll('tr').forEach(tr => { const cells = [...tr.children].map(td => td.textContent.trim()).filter(Boolean); if (cells.length) lines.push(cells.join(' | ')); });
+        else if (tag === 'ul' || tag === 'ol') el.querySelectorAll('li').forEach(li => lines.push('• ' + li.textContent.trim()));
+        else if (/^h[1-6]$/.test(tag)) lines.push(el.textContent.trim());
+        else if (tag === 'p') el.innerHTML.split(/<br\s*\/?>/i).forEach(part => { const t = plain(part); if (t) lines.push(t); });
+        else walk(el);
+      }
+    };
+    walk(doc.body);
+    const structured = lines.join('\n');
+    if (structured.length >= raw.length * 0.6) return normalizeCVText(structured);
+  } catch (e) { console.warn('Structured DOCX read failed, using raw text:', e); }
+  return normalizeCVText(raw);
+}
+
+function fileToDataUrl(file) {
+  return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(new Error('Could not read image')); r.readAsDataURL(file); });
+}
+async function extractImage(file, onStatus) {
+  if (onStatus) onStatus('Running OCR on image (can take up to a minute)...');
+  const dataUrl = await fileToDataUrl(file);
+  const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('Invalid image')); i.src = dataUrl; });
+  const canvas = document.createElement('canvas'); canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
+  canvas.getContext('2d').drawImage(img, 0, 0);
+  const text = await ocrCanvas(canvas);
+  const [meta, b64] = dataUrl.split(',');
+  return { text: normalizeCVText(text), imageBase64: b64, imageMime: (meta.match(/data:(.*?);/) || [])[1] || 'image/jpeg' };
+}
+
+async function parseDocumentFile(file, onStatus) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (['png', 'jpg', 'jpeg', 'webp'].includes(ext)) { const r = await extractImage(file, onStatus); return { ...r, ocr: true }; }
+  const buffer = await file.arrayBuffer();
+  if (ext === 'pdf') {
+    let text = '', ocrPages = 0;
+    try { ({ text, ocrPages } = await extractPdf(buffer.slice(0), onStatus)); } catch (e) { console.warn('PDF text extraction failed:', e); if (/loading/.test(e.message)) throw e; }
+    const imageBase64 = (!text || text.length < 150 || ocrPages) ? await renderPdfFirstPageAsBase64(buffer.slice(0)) : null;
+    return { text, imageBase64, imageMime: 'image/jpeg', ocr: ocrPages > 0 };
+  }
+  if (ext === 'docx') return { text: await extractDocx(buffer), imageBase64: null, ocr: false };
+  if (ext === 'txt' || ext === 'md') return { text: normalizeCVText(new TextDecoder().decode(buffer)), imageBase64: null, ocr: false };
+  throw new Error(`Unsupported format .${ext}. Use PDF, DOCX, TXT or an image.`);
+}
+
+// Instant parse preview shown in the upload queue so bad reads are caught BEFORE analysis
+function quickParse(text, fileName) {
+  const segs = text.split(/\n|\|/).map(s => s.trim()).filter(Boolean);
+  const name = extractName({ fileName }, segs);
+  const wh = extractWorkHistory(text), edu = extractEducation(text);
+  const complete = wh.filter(w => w.companyName && w.roleTitle).length;
+  let q = 0;
+  if (text.length > 400) q++;
+  if (wh.length) q++;
+  if (wh.length && complete === wh.length) q++;
+  if (edu.length) q++;
+  if (name.split(' ').length >= 2 && !NAME_BLOCK.test(name)) q++;
+  return { name, roles: wh.length, complete, edu: edu.length, quality: q >= 5 ? 'Good' : q >= 3 ? 'Fair' : 'Poor' };
+}
+
+
+async function handleCVFiles(fileList) {
+  const files = Array.from(fileList || []); if (!files.length) return;
+  let added = 0;
+  for (const file of files) {
+    try {
+      showToast(`Reading ${file.name}...`);
+      const p = await parseDocumentFile(file, msg => showToast(msg));
+      if ((p.text && p.text.length > 10) || p.imageBase64) {
+        const text0 = p.text || '[Scanned resume: read the attached page image]';
+        const cv0 = { fileName: file.name, text: text0 };
+        const cid = makeCandId(cv0);
+        if (state.uploadedCVs.some(x => x.id === cid)) { showToast(`${file.name} is already in the queue (duplicate ignored).`, 'warning'); continue; }
+        state.uploadedCVs.push({
+          id: cid, fileName: file.name,
+          text: text0,
+          imageBase64: p.imageBase64 || null, imageMime: p.imageMime || 'image/jpeg', ocr: !!p.ocr,
+          sizeLabel: `${(file.size / 1024).toFixed(1)} KB`,
+          preview: p.text ? quickParse(p.text, file.name) : null
+        });
+        added++;
+      } else showToast(`Skipped ${file.name}: empty or unreadable.`, 'warning');
+    } catch (err) { showToast(`Error reading ${file.name}: ${err.message}`, 'error'); }
+  }
+  if (added) { renderCVQueue(); showToast(`Imported ${added} CV(s).`, 'success'); }
+  $('cvFileInput').value = '';
+}
+
+function removeCV(id) { state.uploadedCVs = state.uploadedCVs.filter(c => c.id !== id); renderCVQueue(); }
+function clearAllCVs() { state.uploadedCVs = []; renderCVQueue(); }
+
+function renderCVQueue() {
+  const list = $('cvQueueList'), n = state.uploadedCVs.length;
+  $('queuedCountText').innerText = `${n} file${n === 1 ? '' : 's'} ready`;
+  $('clearCVsBtn').classList.toggle('hidden', n === 0);
+  if (!n) {
+    list.innerHTML = `<div class="text-center py-8 px-4 rounded-xl bg-gray-50 border border-gray-100"><p class="text-xs text-pwc-grey">No CVs imported yet. Upload files above or click <strong class="text-pwc-charcoal">"Load Sample Engagement"</strong> to test.</p></div>`;
+    return;
+  }
+  const qc = { Good: 'text-emerald-700', Fair: 'text-amber-700', Poor: 'text-rose-700' };
+  list.innerHTML = state.uploadedCVs.map(cv => {
+    const isDoc = /\.docx?$/i.test(cv.fileName), isImg = /\.(png|jpe?g|webp)$/i.test(cv.fileName);
+    const badge = isDoc ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-red-50 text-pwc-burgundy border-red-200';
+    const label = isDoc ? 'DOCX' : isImg ? 'IMG-OCR' : (cv.ocr ? 'PDF-OCR' : 'PDF');
+    const pv = cv.preview;
+    const detail = pv
+      ? `Detected: <strong>${esc(pv.name)}</strong> • ${pv.roles} role${pv.roles === 1 ? '' : 's'} (${pv.complete} with title + company) • ${pv.edu} education • Parse: <strong class="${qc[pv.quality]}">${pv.quality}</strong>`
+      : 'No text layer: AI will read the page image';
+    return `<div class="flex items-center justify-between p-3 rounded-xl bg-white border border-gray-200 hover:border-pwc-orange/50 transition">
+      <div class="flex items-center gap-3 min-w-0"><span class="px-2 py-1 rounded text-[10px] font-bold border ${badge} shrink-0">${label}</span>
+        <div class="min-w-0"><p class="text-xs font-semibold truncate">${esc(cv.fileName)}</p><p class="text-[11px] text-pwc-grey">${esc(cv.sizeLabel)} • ${detail}</p></div></div>
+      <button onclick="removeCV('${cv.id}')" class="p-1.5 text-gray-400 hover:text-pwc-burgundy rounded-lg" title="Remove"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`;
+  }).join('');
+  icons();
+}
+
+
+// =========================================================================
+// TALENTLENS: SCREENING ENGINE (JD context, evidence-based dimension scoring, normalisation, ranking rationale)
+// =========================================================================
+const STOP = new Set('and or the with that this from have will your their about which when into more other such than then them these some would make like time very know take people year good could work team role experience skills years ability strong including using support business management for to of in on at by an as be is are was were been being do does did done lead leading ensure manage develop provide deliver across within must should also able etc per new key candidate required responsibilities qualifications'.split(' '));
+const titleCase = s => s.replace(/\b[a-z]/g, m => m.toUpperCase());
+const tok = t => (t.toLowerCase().match(/[a-z][a-z0-9+#.\/-]{2,}/g) || []).map(w => w.replace(/[.\/-]+$/, '')).filter(w => w.length > 2 && !STOP.has(w));
+const stemToks = t => tok(t).map(w => w.length > 4 ? w.replace(/(ations?|ing|ed|es|s)$/, '') : w).filter(w => w.length > 2);
+
+function eduLevel(t) {
+  if (/\b(ph\.?\s?d|doctorate|doctoral)\b/i.test(t)) return 4;
+  if (/\b(master'?s?|m\.?\s?sc|mba|m\.?\s?phil|m\.?\s?eng|m\.?\s?tech|post ?graduate)\b/i.test(t)) return 3;
+  if (/\b(bachelor'?s?|b\.?\s?sc|b\.?\s?eng|b\.?\s?tech|b\.?\s?com|bba|b\.?\s?a\b|undergraduate|degree|hons)\b/i.test(t)) return 2;
+  if (/\bdiploma\b|\bassociate degree\b/i.test(t)) return 1;
+  return 0;
+}
+const CERT_RE = /\b(certified|certification|pmp|cissp|cisa|cism|itil|prince2|ccna|ccnp|ccie|aws certified|azure|acca|cfa|icap|cpa|scrum master|six sigma|togaf)\b/i;
+const MEMBER_RE = /\b(member of|fellow|membership|chartered|ieee|pec\b|icap|acca|pmi)\b/i;
+
+function extractMandatory(jdText) {
+  const lines = splitUnits(jdText).map(l => l.replace(/^[\s•\-–*]+/, '').trim()).filter(l => l.length > 12 && l.length < 200);
+  const raw = jdText.split('\n').map(s => s.trim()).filter(Boolean);
+  const hs = raw.findIndex(l => l.length < 60 && /^(required|mandatory|essential|minimum)?\s*(qualifications?|requirements?|skills)\b|^required\b/i.test(headNorm(l)));
+  const sec = hs >= 0 ? raw.slice(hs + 1).filter(l => !(l.length < 45 && END_HEAD_RE.test(headNorm(l)) && !/qualif|requir/i.test(l))).slice(0, 8).map(cleanLine) : [];
+  const flagged = lines.filter(l => /\b(must|required|mandatory|essential|minimum|at least|proven|should have)\b/i.test(l));
+  return [...new Set([...sec, ...flagged])].filter(l => l.length > 12 && l.length < 200).slice(0, 8);
+}
+
+function buildJDContext(jobTitle, jdText) {
+  const jt = tok(jdText), freq = {};
+  jt.forEach(w => freq[w] = (freq[w] || 0) + 1);
+  for (let i = 0; i < jt.length - 1; i++) { const b = jt[i] + ' ' + jt[i + 1]; freq[b] = (freq[b] || 0) + 1; }
+  const ranked = Object.entries(freq).filter(([w, n]) => !w.includes(' ') || n > 1).sort((a, b) => b[1] - a[1] || b[0].length - a[0].length).map(e => e[0]);
+  const terms = [];
+  for (const w of ranked) { if (terms.length >= 12) break; if (!terms.some(t => t.includes(w) || w.includes(t))) terms.push(w); }
+  const ym = jdText.match(/(\d{1,2})\s*(?:\+|to|-|–)?\s*(\d{1,2})?\s*\+?\s*years/i);
+  const tMin = ym ? +ym[1] : null, tMax = ym ? (ym[2] ? +ym[2] : +ym[1] + 4) : null;
+  const responsibilities = splitUnits(jdText).filter(s => s.length > 30 && s.length < 200 && !/^(role|practice|location|overview)\b/i.test(s)).slice(0, 8);
+  return {
+    jobTitle, terms, responsibilities, tMin, tMax, reqLevel: eduLevel(jdText),
+    needCert: CERT_RE.test(jdText), mandatory: extractMandatory(jdText),
+    senior: /\b(vp|vice president|director|head of|chief|cto|cfo|cio|managing director|partner)\b/i.test(jobTitle + ' ' + jdText.slice(0, 200))
+  };
+}
+
+// ---- Deterministic, evidence-based scoring of the five fixed dimensions (used by the local engine and as per-dimension fallback) ----
+function scoreDimsLocal(text, ctx, parsed) {
+  const low = text.toLowerCase(), units = parsed.units, enough = text.length >= 200;
+  const ev = (re, n = 2) => units.filter(u => re.test(u)).slice(0, n).map(u => u.slice(0, 140));
+  const mk = (key, score, coverage, evidence) => ({ key, score: score == null ? null : clamp(Math.round(score)), coverage: clamp(Math.round(coverage)), evidence: evidence.length ? evidence.slice(0, 3) : ['No supporting statement found in the CV'], source: 'local' });
+  const out = [];
+
+  // 1. Domain & Technical Fit
+  { const hits = ctx.terms.map(t => low.split(t).length - 1), matched = ctx.terms.filter((t, i) => hits[i] > 0);
+    const applied = units.some(u => /(experience|led|built|managed|designed|developed|implemented|delivered|worked|using|deployed)/i.test(u) && matched.some(t => u.toLowerCase().includes(t)));
+    const subs = [/\b(skills|expertise|competenc|tools|technologies)\b/i.test(text) || matched.length >= 3, applied, matched.length >= 2, matched.length >= ctx.terms.length * 0.4];
+    const cov = subs.filter(Boolean).length * 25;
+    const evid = [matched.length ? 'Matched JD terms: ' + matched.slice(0, 6).join(', ') : 'No JD terms found in CV', ...ev(new RegExp('(' + (matched.slice(0, 6).map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') || '$^') + ')', 'i'), 2)];
+    out.push(mk('domain', enough && ctx.terms.length ? (matched.length / ctx.terms.length) * 140 : null, cov, evid)); }
+
+  // 2. Role Responsibility Alignment (token overlap between each JD responsibility and the best-matching CV statement)
+  { const jr = ctx.responsibilities;
+    if (!jr.length || !enough) out.push(mk('responsibility', null, 0, [jr.length ? 'CV text too short to assess' : 'No responsibilities identified in the JD']));
+    else {
+      const cvSets = units.map(u => ({ u, s: new Set(stemToks(u)) }));
+      let sum = 0, withEv = 0, n = 0; const evid = [];
+      jr.forEach(r => {
+        const rt = new Set(stemToks(r)); if (rt.size < 3) return; n++;
+        let best = 0, bu = '';
+        cvSets.forEach(({ u, s }) => { let inter = 0; rt.forEach(w => { if (s.has(w)) inter++; }); const f = inter >= 2 ? inter / rt.size : 0; if (f > best) { best = f; bu = u; } });
+        sum += Math.min(100, (best / 0.45) * 100); if (best >= 0.15) { withEv++; if (evid.length < 2) evid.push(`JD: “${r.slice(0, 70)}…” ↔ CV: “${bu.slice(0, 90)}”`); }
+      });
+      out.push(mk('responsibility', n ? sum / n : null, n ? (withEv / n) * 100 : 0, evid.length ? evid : ['No CV statement overlaps the JD responsibilities']));
+    } }
+
+  // 3. Leadership & Ownership
+  { const s1 = (text.match(/\b(led|lead|leading|managed|managing|headed|directed|supervised|mentored|oversaw|spearheaded|coordinated|chaired)\b/gi) || []).length;
+    const s2 = /\b(stakeholder|c-suite|executive|board|steering committee|sponsor|cxo|senior management|clients?)\b/i.test(text);
+    const s3 = /\b(team of|managed|led|supervised|headed)\s+(a\s+)?(team of\s+)?\d+|\b\d+\s*\+?\s*(engineers|consultants|staff|employees|people|members|reports|developers|analysts)\b/i.test(text);
+    const s4 = parsed.workHistory.some(w => /(head|director|vp|vice president|chief|manager|lead|principal|supervisor|cto|cio|ceo)/i.test(w.roleTitle || '')) || /(head|director|vp|vice president|chief|manager|lead|principal|cto|cio|ceo)/i.test(text.split('\n').slice(0, 15).join(' '));
+    const s5 = /\b(own(ed|ership)|accountable|p&l|budget|decision|responsible for|strategy|roadmap)\b/i.test(text);
+    const present = [s1 > 0, s2, s3, s4, s5].filter(Boolean).length;
+    const pts = Math.min(30, s1 * 10) + (s2 ? 15 : 0) + (s3 ? 20 : 0) + (s4 ? 20 : 0) + (s5 ? 15 : 0);
+    out.push(mk('leadership', enough && present ? pts : null, present * 20, ev(/\b(led|managed|headed|directed|supervised|mentored|oversaw|spearheaded|team of|stakeholder|owned)\b/i, 3))); }
+
+  // 4. Delivery & Execution Depth
+  { const d1 = (text.match(/\b(delivered|implemented|deployed|launched|built|migrated|completed|commissioned|established|developed|designed|executed)\b/gi) || []).length;
+    const quant = (text.match(/\b\d+(\.\d+)?\s*(%|percent|million|billion|m\b|k\b|x\b)|\b(pkr|usd|rs\.?|\$)\s?\d+|\b\d+\s*\+?\s*(projects|clients|users|sites|branches|systems|countries)\b/gi) || []).length;
+    const d3 = /\b(project|programme|program|engagement|rollout|migration|implementation)\b/i.test(text);
+    const d4 = /\b(enterprise|nationwide|global|multi-|large-scale|regional|million|billion|data cent(er|re)|mission-critical|national)\b/i.test(text);
+    const present = [d1 > 0, quant > 0, d3, d4].filter(Boolean).length;
+    const pts = Math.min(30, d1 * 10) + Math.min(36, quant * 12) + (d3 ? 14 : 0) + (d4 ? 20 : 0);
+    out.push(mk('delivery', enough && present ? pts : null, present * 25, ev(/\b(delivered|implemented|deployed|launched|built|migrated|established)\b.*|\d+\s*(%|million|projects|clients)/i, 3))); }
+
+  // 5. Qualification Calibration
+  { const edu = parsed.education, candLevel = Math.max(0, ...edu.map(eduLevel));
+    const certs = edu.filter(l => CERT_RE.test(l)).length + (text.match(new RegExp(CERT_RE.source, 'gi')) || []).length;
+    const member = MEMBER_RE.test(text);
+    let score = null;
+    if (candLevel > 0) {
+      score = ctx.reqLevel ? (candLevel >= ctx.reqLevel ? 100 : Math.max(20, 100 - 35 * (ctx.reqLevel - candLevel))) : Math.min(100, 55 + 15 * candLevel);
+      if (ctx.needCert) score = certs ? score : Math.max(0, score - 25);
+      if (member) score = Math.min(100, score + 5);
+    }
+    const cov = (candLevel > 0 ? 40 : 0) + ((certs || member) ? 30 : 0) + ((ctx.reqLevel || ctx.needCert) ? 30 : 0);
+    out.push(mk('qualification', score, cov, edu.length ? edu.slice(0, 3) : ['No education or certification details found'])); }
+  return out;
+}
+
+const weightedAlignment = c => {
+  const w = getWeights(); let num = 0, den = 0, n = 0;
+  c.dims.forEach((d, i) => { if (d.score != null) { num += d.score * w[i]; den += w[i]; n++; } });
+  return { score: den ? Math.round(num / den) : null, scored: n };
+};
+const simpleAverage = c => { const s = c.dims.filter(d => d.score != null).map(d => d.score); return s.length ? Math.round(s.reduce((a, b) => a + b, 0) / s.length) : null; };
+const avgCoverage = c => Math.round(c.dims.reduce((a, d) => a + d.coverage, 0) / c.dims.length);
+
+function getWeights() {
+  const w = Store.get('weights', null);
+  const arr = Array.isArray(w) && w.length === 5 && w.every(x => Number.isFinite(x) && x >= 0) && w.some(x => x > 0) ? w : [20, 20, 20, 20, 20];
+  return arr;
+}
+
+// ---- Mandatory requirement checks (local) ----
+function checkMandatoryLocal(ctx, text, parsed, years) {
+  const low = text.toLowerCase();
+  return ctx.mandatory.map(req => {
+    const r = { requirement: req, status: 'unclear', evidence: '' };
+    const ym = req.match(/(\d{1,2})\s*(?:\+|to|-|–)?\s*(\d{1,2})?\s*\+?\s*years/i);
+    if (ym && years) { r.status = years >= +ym[1] ? 'met' : 'not_met'; r.evidence = `${years} years found in CV (requires ${ym[1]}+).`; return r; }
+    const lvl = eduLevel(req);
+    if (lvl && /(degree|bachelor|master|phd|diploma|b\.?sc|m\.?sc|mba)/i.test(req)) {
+      const cl = Math.max(0, ...parsed.education.map(eduLevel)); if (cl) { r.status = cl >= lvl ? 'met' : 'not_met'; r.evidence = parsed.education.find(e => eduLevel(e) === cl) || ''; return r; }
+    }
+    const rt = [...new Set(stemToks(req))]; if (!rt.length) return r;
+    let best = 0, bu = '';
+    parsed.units.forEach(u => { const us = new Set(stemToks(u)); let i = 0; rt.forEach(w => { if (us.has(w)) i++; }); const f = i / rt.length; if (f > best) { best = f; bu = u; } });
+    r.status = best >= 0.5 ? 'met' : best >= 0.25 ? 'unclear' : 'not_met'; r.evidence = best >= 0.25 ? bu.slice(0, 140) : 'No supporting statement found in CV.';
+    return r;
+  });
+}
+
+// ---- Local screening: every number is derived from the CV text ----
+function localAnalyze(jobTitle, jdText, cvs, ctx) {
+  const candidates = cvs.map(cv => {
+    const text = cv.text || '';
+    const segs = text.split(/\n|\|/).map(s => s.trim()).filter(Boolean);
+    const parsed = { units: splitUnits(text), education: extractEducation(text), workHistory: extractWorkHistory(text) };
+    const name = extractName(cv, segs);
+    const titleRe2 = /(engineer|architect|manager|director|lead|consultant|analyst|developer|specialist|officer|head|vp|president|designer|scientist|accountant|administrator|executive|advisor|chief|technologist|principal)/i;
+    const titleSeg = segs.slice(0, 20).find(x => x !== name && x.length < 80 && x.split(/\s+/).length <= 9 && titleRe2.test(x) && !eduLevel(x));
+    const explicit = [...text.matchAll(/(\d{1,2}(?:\.\d)?)\s*\+?\s*years/gi)].map(m => parseFloat(m[1])).filter(n => n > 0 && n < 45);
+    let years = explicit.length ? Math.max(...explicit) : tenureSpan(parsed.workHistory);
+    const dims = scoreDimsLocal(text, ctx, parsed);
+    const w = getWeights(); let num = 0, den = 0;
+    dims.forEach((d, i) => { if (d.score != null) { num += d.score * w[i]; den += w[i]; } });
+    const alignment = den ? num / den : 0;
+    const yearsKnown = years > 0 && ctx.tMin != null;
+    const expFit = !yearsKnown ? 60 : years >= ctx.tMin ? (years <= ctx.tMax + 3 ? 100 : Math.max(60, 100 - (years - ctx.tMax - 3) * 4)) : Math.max(20, 100 - (ctx.tMin - years) * 15);
+    const fit = den ? clamp(Math.round(0.75 * alignment + 0.25 * expFit), 10, 96) : 10;
+    const senior = /\b(vp|vice president|director|head of|chief|cto|cfo|cio|managing director|partner)\b/i;
+    const domain = dims[0].score;
+    let status = 'Optimal Fit';
+    if (yearsKnown && (years >= ctx.tMax + 6 || (senior.test(text) && !ctx.senior && years >= ctx.tMax + 3))) status = 'Over-Qualified';
+    else if ((yearsKnown && years < ctx.tMin - 2) || (domain != null && domain < 30) || !den) status = 'Under-Qualified';
+    const strong = dims.map((d, i) => ({ d, i })).filter(x => x.d.score != null && x.d.score >= 70).sort((a, b) => b.d.score - a.d.score).slice(0, 3);
+    const weak = dims.map((d, i) => ({ d, i })).filter(x => x.d.score == null || x.d.score < 50);
+    const hits = ctx.terms.filter(t => text.toLowerCase().includes(t));
+    const strengths = strong.map(x => `${DIMENSIONS[x.i].label} (${x.d.score}/100): ${x.d.evidence[0] || 'evidence in CV'}`);
+    const gaps = [...weak.map(x => `${DIMENSIONS[x.i].label}: ${x.d.score == null ? 'insufficient evidence in CV' : 'weak evidence (' + x.d.score + '/100)'}`), ...ctx.terms.filter(t => !text.toLowerCase().includes(t)).slice(0, 3).map(t => `No evidence of “${t}” in CV`)].slice(0, 5);
+    const expTxt = yearsKnown ? `${years} yrs vs ${ctx.tMin}${ctx.tMax !== ctx.tMin + 4 ? '–' + ctx.tMax : '+'} yrs targeted` : 'years of experience not stated';
+    const rationale = {
+      'Optimal Fit': `Calibrated to the role: weighted competency alignment ${Math.round(alignment)}/100, ${expTxt}.`,
+      'Over-Qualified': `Seniority/experience exceeds the role level (${expTxt}); expect a compensation premium and retention risk.`,
+      'Under-Qualified': `Evidence is below the role level (${expTxt}); weakest areas: ${weak.map(x => DIMENSIONS[x.i].label).slice(0, 3).join(', ') || 'overall coverage'}.`
+    }[status];
+    return {
+      cv, name, currentRoleTitle: titleSeg || jobTitle, yearsExperience: years, overallFitScore: fit, qualificationStatus: status,
+      dims, coreCompetencies: hits.slice(0, 5).map(titleCase),
+      demonstratedResponsibilities: parsed.units.filter(u => /^(led|lead|managed|built|designed|developed|delivered|architected|implemented|drove|launched|owned|created|directed|oversaw|reduced|increased|improved|deployed|migrated|engineered|established|negotiated|coordinated|presented|mentored|spearheaded|executed|optimi[sz]ed|automated)\b/i.test(u) && u.length > 25 && u.length < 200).slice(0, 4),
+      education: parsed.education, workHistory: parsed.workHistory, qualificationRationale: rationale, qualificationAnalysisNote: rationale,
+      strengths, gaps, scoreNote: `Match score = 75% weighted competency alignment (${Math.round(alignment)}) + 25% experience fit (${Math.round(expFit)}).`,
+      mandatoryChecks: checkMandatoryLocal(ctx, text, parsed, years)
+    };
+  });
+  return { roleTitle: jobTitle, jdCoreCompetencies: ctx.terms.slice(0, 6).map(titleCase), jdKeyResponsibilities: ctx.responsibilities.slice(0, 5), mandatoryRequirements: ctx.mandatory, candidates };
+}
+
+// ---- Normalise ANY result (AI or local) into the one candidate shape used by every module ----
+function normalizeResult(p, cvs, jobTitle, engine, ctx) {
+  const strs = a => (Array.isArray(a) ? a.filter(Boolean).map(String) : []);
+  const used = new Set();
+  const candidates = (p.candidates || []).map((c, i) => {
+    const cv = c.cv || cvs.find(x => x.fileName === c.fileName) || cvs[i] || null;
+    const text = cv ? cv.text : '';
+    // dimension scores: AI ratings (per dimension) else deterministic local scoring from the CV text
+    let local = null;
+    const localDims = () => local || (local = scoreDimsLocal(text, ctx || buildJDContext(jobTitle, ''), { units: splitUnits(text), education: extractEducation(text), workHistory: extractWorkHistory(text) }));
+    const dims = DIMENSIONS.map((D, k) => {
+      if (Array.isArray(c.dims) && c.dims[k]) return c.dims[k];
+      const ai = c.dimensionScores && c.dimensionScores[D.key];
+      if (ai && typeof ai === 'object' && ('score' in ai)) {
+        const sc = ai.score == null || !Number.isFinite(Number(ai.score)) ? null : clamp(Math.round(Number(ai.score)));
+        return { key: D.key, score: sc, coverage: clamp(Math.round(Number(ai.coverage) || 0)), evidence: strs(ai.evidence).slice(0, 3), source: 'ai' };
+      }
+      return localDims()[k];
+    });
+    const s = String(c.qualificationStatus || '').toLowerCase();
+    const status = s.includes('over') ? 'Over-Qualified' : s.includes('under') ? 'Under-Qualified' : 'Optimal Fit';
+    const rationale = c.qualificationRationale || c.qualificationAnalysisNote || '';
+    let id = cv ? cv.id : 'C-' + hashStr(String(c.name || i));
+    while (used.has(id)) id += 'x'; used.add(id);
+    const checks = Array.isArray(c.mandatoryChecks) ? c.mandatoryChecks.filter(m => m && m.requirement).map(m => ({ requirement: String(m.requirement), status: ['met', 'not_met', 'unclear'].includes(m.status) ? m.status : 'unclear', evidence: String(m.evidence || '') })) : [];
+    return {
+      id, _i: i, name: String(c.name || '').trim() || (cv ? extractName(cv, text.split(/\n|\|/).map(x => x.trim()).filter(Boolean)) : 'Candidate ' + (i + 1)),
+      fileName: cv ? cv.fileName : (c.fileName || ''), currentRoleTitle: c.currentRoleTitle || '—',
+      yearsExperience: Number(c.yearsExperience) || 0, overallFitScore: clamp(Math.round(Number(c.overallFitScore) || 0)), qualificationStatus: status,
+      dims, coreCompetencies: strs(c.coreCompetencies), demonstratedResponsibilities: strs(c.demonstratedResponsibilities),
+      education: strs(c.education), workHistory: Array.isArray(c.workHistory) ? c.workHistory.filter(w => w && typeof w === 'object') : [],
+      qualificationRationale: rationale, qualificationAnalysisNote: c.qualificationAnalysisNote || rationale, bestFitRationale: c.bestFitRationale || '',
+      strengths: strs(c.strengths), gaps: strs(c.gaps), scoreNote: c.scoreNote || '', mandatoryChecks: checks
+    };
+  });
+
+  candidates.sort((a, b) => {
+    const ao = a.qualificationStatus === 'Optimal Fit', bo = b.qualificationStatus === 'Optimal Fit';
+    return ao !== bo ? (ao ? -1 : 1) : b.overallFitScore - a.overallFitScore;
+  });
+  candidates.forEach(c => validateCandidate(c, cvs.find(x => x.id === c.id) || null));
+  const seen = {}; candidates.forEach(c => { const k = c.name.toLowerCase(); seen[k] = (seen[k] || 0) + 1; if (seen[k] > 1) c.name += ` (${seen[k]})`; });
+  candidates.forEach((c, i) => { c.rank = i + 1; delete c._i; });
+  buildRankings(candidates);
+  const top = candidates[0];
+  if (top && top.qualificationStatus === 'Optimal Fit' && !top.bestFitRationale) top.bestFitRationale = [top.ranking.strongText, top.ranking.compare[0]].filter(Boolean).join(' ');
+  const mandatory = strs(p.mandatoryRequirements).length ? strs(p.mandatoryRequirements) : (ctx ? ctx.mandatory : []);
+  let summary = p.executiveSummary || '';
+  if (!summary && top) summary = `${top.name} is ranked #1 of ${candidates.length} (${top.overallFitScore}% match, ${top.qualificationStatus}). ${top.ranking.compare[0] || ''}`.trim();
+  if (engine === 'local') summary += ' (Local keyword engine, not AI: scores are derived from CV text and may miss context.)';
+  return { roleTitle: p.roleTitle || jobTitle, jobId: state.jobId, executiveSummary: summary, jdCoreCompetencies: strs(p.jdCoreCompetencies), jdKeyResponsibilities: strs(p.jdKeyResponsibilities), mandatoryRequirements: mandatory, candidates, engine };
+}
+
+// ---- Ranking rationale: deterministic, comparative, evidence-linked ----
+function buildRankings(list) {
+  const n = list.length;
+  const why = (a, b) => {
+    const aOpt = a.qualificationStatus === 'Optimal Fit', bOpt = b.qualificationStatus === 'Optimal Fit';
+    const parts = [];
+    if (aOpt && !bOpt) parts.push(`${a.name} is calibrated to the role while ${b.name} is ${b.qualificationStatus.toLowerCase()}${b.overallFitScore > a.overallFitScore ? `, which outweighs ${b.name}'s higher raw score (${b.overallFitScore}% vs ${a.overallFitScore}%)` : ''}`);
+    else { const d = a.overallFitScore - b.overallFitScore; parts.push(d > 0 ? `${d}-point higher JD match (${a.overallFitScore}% vs ${b.overallFitScore}%)` : `equal JD match (${a.overallFitScore}%), ordered by screening sequence`); }
+    const lead = DIMENSIONS.map((D, k) => ({ D, diff: (a.dims[k].score ?? 0) - (b.dims[k].score ?? 0), both: a.dims[k].score != null && b.dims[k].score != null })).filter(x => x.both && x.diff >= 8).sort((x, y) => y.diff - x.diff).slice(0, 2);
+    if (lead.length) parts.push(`stronger on ${lead.map(x => `${x.D.label} (+${x.diff})`).join(' and ')}`);
+    return parts.join('; ') + '.';
+  };
+  list.forEach((c, i) => {
+    const sc = c.dims.map((d, k) => ({ l: DIMENSIONS[k].label, s: d.score })).filter(x => x.s != null);
+    const strong = [...sc].sort((a, b) => b.s - a.s).filter(x => x.s >= 70).slice(0, 3);
+    const weak = [...sc].sort((a, b) => a.s - b.s).filter(x => x.s < 60).slice(0, 3);
+    const unknown = c.dims.map((d, k) => d.score == null ? DIMENSIONS[k].label : null).filter(Boolean);
+    const fmt = a => a.map(x => `${x.l} (${x.s}/100)`).join(', ');
+    const avg = simpleAverage(c);
+    const reasons = [`Overall JD match ${c.overallFitScore}%${avg != null ? `; average across scored competencies ${avg}/100` : ''}.`];
+    if (c.scoreNote) reasons.push(c.scoreNote);
+    if (strong.length) reasons.push('Strongest on: ' + fmt(strong) + '.');
+    if (weak.length) reasons.push('Weakest on: ' + fmt(weak) + '.');
+    if (unknown.length) reasons.push('Not enough evidence to score: ' + unknown.join(', ') + ' (excluded, not treated as zero).');
+    reasons.push({
+      'Optimal Fit': `Calibrated to the role level${c.yearsExperience ? ` (${c.yearsExperience} yrs experience)` : ''}: no seniority premium or retention risk flagged.`,
+      'Over-Qualified': 'Over-qualified: seniority/experience exceeds the role, so a compensation premium and retention risk apply; ranked behind optimal-fit candidates.',
+      'Under-Qualified': 'Under-qualified: evidence or experience is below the role level, so structured onboarding or training investment is likely.'
+    }[c.qualificationStatus]);
+    const compare = [];
+    if (i > 0) compare.push(`Ranked below #${i} ${list[i - 1].name}: ${why(list[i - 1], c)}`);
+    if (i < n - 1) compare.push(`${i === 0 ? 'Ranked #1, ahead of' : 'Ranked above'} #${i + 2} ${list[i + 1].name}: ${why(c, list[i + 1])}`);
+    c.ranking = { headline: `#${c.rank} of ${n}: ${c.overallFitScore}% match, ${c.qualificationStatus}`, reasons, compare, strongText: strong.length ? `Strongest on ${fmt(strong)}.` : '', strengths: c.strengths, gaps: c.gaps };
+  });
+}
+
+// ---- Mandatory requirements (engine result + recruiter confirmation) ----
+const reviewKey = (cid) => `review:${state.jobId}:${cid}`;
+const getReview = cid => Store.get(reviewKey(cid), { decision: '', notes: '', overrides: {} });
+function mandatorySummary(c) {
+  const rv = getReview(c.id);
+  let met = 0, unmet = 0, unclear = 0;
+  c.mandatoryChecks.forEach((m, i) => {
+    const o = rv.overrides && rv.overrides[i];
+    const s = o === 'confirmed' ? 'met' : o === 'not_met' ? 'not_met' : m.status;
+    if (s === 'met') met++; else if (s === 'not_met') unmet++; else unclear++;
+  });
+  return { met, unmet, unclear, total: c.mandatoryChecks.length };
+}
+
+
+// =========================================================================
+// TALENTLENS: AI CALL + ANALYSIS RUN
+// =========================================================================
+async function checkAIStatus() {
+  const el = $('aiStatusChip'); if (!el) return;
+  const set = (t, c) => { el.innerText = t; el.className = 'px-2 py-0.5 rounded-full border text-[11px] font-semibold ' + c; };
+  try {
+    const r = await fetch(ANALYZE_ENDPOINT, { method: 'GET' }); const j = await r.json();
+    if (j.configured) set('AI connected', 'bg-emerald-50 text-emerald-700 border-emerald-200');
+    else set('AI key missing: using local engine', 'bg-amber-50 text-amber-800 border-amber-200');
+  } catch (e) { set('AI endpoint not found: using local engine', 'bg-rose-50 text-rose-700 border-rose-200'); }
+}
+
+async function callAnalyzeAPI(payload, retries = 1) {
+  for (let a = 0; a <= retries; a++) {
+    let res;
+    try { res = await fetch(ANALYZE_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); }
+    catch (e) { if (a === retries) throw new Error('Network error calling ' + ANALYZE_ENDPOINT); await new Promise(r => setTimeout(r, 1200)); continue; }
+    if (res.ok) return res.json();
+    const body = (await res.text().catch(() => '')).slice(0, 200);
+    if ((res.status >= 500 || res.status === 429) && a < retries) { await new Promise(r => setTimeout(r, 1200)); continue; }
+    throw new Error(`AI service HTTP ${res.status}${res.status === 404 ? ' (is the /api/analyze route deployed?)' : ''} ${body}`);
+  }
+}
+
+const dimSchema = { type: 'OBJECT', properties: { score: { type: 'INTEGER', nullable: true }, coverage: { type: 'INTEGER' }, evidence: { type: 'ARRAY', items: { type: 'STRING' } } }, required: ['score', 'coverage', 'evidence'] };
+const ANALYSIS_SCHEMA = {
+  type: 'OBJECT',
+  properties: {
+    roleTitle: { type: 'STRING' }, executiveSummary: { type: 'STRING' },
+    jdCoreCompetencies: { type: 'ARRAY', items: { type: 'STRING' } },
+    jdKeyResponsibilities: { type: 'ARRAY', items: { type: 'STRING' } },
+    mandatoryRequirements: { type: 'ARRAY', items: { type: 'STRING' } },
+    candidates: { type: 'ARRAY', items: { type: 'OBJECT', properties: {
+      name: { type: 'STRING' }, fileName: { type: 'STRING' }, currentRoleTitle: { type: 'STRING' }, yearsExperience: { type: 'NUMBER' },
+      overallFitScore: { type: 'INTEGER' }, qualificationStatus: { type: 'STRING', enum: ['Optimal Fit', 'Over-Qualified', 'Under-Qualified'] },
+      qualificationRationale: { type: 'STRING' }, bestFitRationale: { type: 'STRING' },
+      dimensionScores: { type: 'OBJECT', properties: Object.fromEntries(DIMENSIONS.map(d => [d.key, dimSchema])), required: DIMENSIONS.map(d => d.key) },
+      strengths: { type: 'ARRAY', items: { type: 'STRING' } }, gaps: { type: 'ARRAY', items: { type: 'STRING' } },
+      mandatoryChecks: { type: 'ARRAY', items: { type: 'OBJECT', properties: { requirement: { type: 'STRING' }, status: { type: 'STRING', enum: ['met', 'not_met', 'unclear'] }, evidence: { type: 'STRING' } }, required: ['requirement', 'status', 'evidence'] } },
+      coreCompetencies: { type: 'ARRAY', items: { type: 'STRING' } },
+      demonstratedResponsibilities: { type: 'ARRAY', items: { type: 'STRING' } },
+      education: { type: 'ARRAY', items: { type: 'STRING' } },
+      workHistory: { type: 'ARRAY', items: { type: 'OBJECT', properties: { companyName: { type: 'STRING' }, roleTitle: { type: 'STRING' }, tenure: { type: 'STRING' }, keySummary: { type: 'STRING' } } } }
+    }, required: ['name', 'fileName', 'currentRoleTitle', 'yearsExperience', 'overallFitScore', 'qualificationStatus', 'qualificationRationale', 'dimensionScores', 'strengths', 'gaps', 'mandatoryChecks', 'coreCompetencies', 'demonstratedResponsibilities'] } }
+  },
+  required: ['roleTitle', 'executiveSummary', 'jdCoreCompetencies', 'jdKeyResponsibilities', 'mandatoryRequirements', 'candidates']
+};
+
+function buildPrompt(jobTitle, jdText, cvs) {
+  let p = `You are a Senior People & Organisation Recruitment Advisor working inside the TalentLens ATS. Evaluate each candidate CV against the Job Description for "${jobTitle}".
+
+RULES (follow strictly):
+1. Use ONLY evidence in the CV text/images. Never invent employers, degrees, dates, achievements or scores. Use empty arrays when something is absent.
+2. dimensionScores: rate EXACTLY these five dimensions, each 0-100 with an evidence-coverage value (0-100 = share of the listed criteria for which the CV gives evidence) and 1-3 short evidence items taken from the CV:
+${DIMENSIONS.map(d => `   - ${d.key}: ${d.label} (${d.basis})`).join('\n')}
+   If the CV has NO usable information for a dimension, set score to null and coverage low. Do NOT use 0 to mean "unknown".
+3. overallFitScore: 0-100, differentiated between candidates (never identical scores).
+4. qualificationStatus: "Over-Qualified" if seniority/years clearly exceed the JD level; "Under-Qualified" if core requirements or required years are missing; otherwise "Optimal Fit". Explain with specifics in qualificationRationale.
+5. mandatoryRequirements: the JD's must-have requirements (max 8, copied from the JD). mandatoryChecks: for every one of them, status met / not_met / unclear with CV evidence.
+6. strengths: 2-4 items "Competency: evidence from the CV". gaps: 1-3 JD requirements with no or weak evidence.
+7. name: the candidate's real name from the CV (never a degree, job title or file name). fileName: copy the file name given below.
+8. workHistory: copy company name, job title and dates EXACTLY as written in the CV, one entry per role, most recent first. education: degrees and certifications exactly as written. demonstratedResponsibilities: 2-4 achievements/duties, no names or contact lines.
+9. bestFitRationale only for the single top Optimal Fit candidate, otherwise "". executiveSummary: 2 sentences naming the top candidate and why.
+10. If CV text looks garbled or partial, rely on the attached page image. Do not output any salary figures.
+
+JOB DESCRIPTION:
+${jdText.substring(0, 8000)}
+
+CANDIDATE CVS:
+`;
+  cvs.forEach((cv, i) => { p += `\n--- CANDIDATE ${i + 1} (File: ${cv.fileName}) ---\n${cv.text.substring(0, 9000)}\n`; });
+  return p;
+}
+
+async function runRecruitmentAnalysis() {
+  const jobTitle = $('jobTitleInput').value.trim() || 'Target Role';
+  const jdText = $('jdTextInput').value.trim();
+  const cvs = state.uploadedCVs;
+  if (!jdText || jdText.length < 20) { showToast('Please enter or import a complete Job Description first.', 'warning'); return; }
+  if (!cvs.length) { showToast('Please upload at least one candidate CV.', 'warning'); return; }
+
+  state.jobId = makeJobId(jobTitle, jdText);
+  const ctx = buildJDContext(jobTitle, jdText);
+  const loader = $('analysisLoader'), bar = $('loaderProgressBar'), status = $('loaderStatusText');
+  loader.classList.remove('hidden'); loader.classList.add('flex');
+  bar.style.width = '25%'; status.innerText = 'Reading CVs & extracting candidate profiles...';
+
+  const parts = [{ text: buildPrompt(jobTitle, jdText, cvs) }];
+  cvs.forEach((cv, i) => { if (cv.imageBase64) { parts.push({ text: `Page image for CANDIDATE ${i + 1} (${cv.fileName}):` }); parts.push({ inlineData: { mimeType: cv.imageMime || 'image/jpeg', data: cv.imageBase64 } }); } });
+  const payload = { contents: [{ role: 'user', parts }], generationConfig: { temperature: 0.1, responseMimeType: 'application/json', responseSchema: ANALYSIS_SCHEMA } };
+
+  let result, reason = '';
+  try {
+    setTimeout(() => { bar.style.width = '68%'; status.innerText = 'Scoring evidence against the five competency dimensions...'; }, 700);
+    const json = await callAnalyzeAPI(payload);
+    let raw = (json?.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('');
+    if (!raw) throw new Error('Empty response from AI service');
+    raw = raw.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
+    result = normalizeResult(JSON.parse(raw), cvs, jobTitle, 'ai', ctx);
+    if (!result.candidates.length) throw new Error('AI returned no candidates');
+  } catch (err) {
+    console.warn('AI evaluation failed, using local engine:', err);
+    reason = err.message;
+    try { result = normalizeResult(localAnalyze(jobTitle, jdText, cvs, ctx), cvs, jobTitle, 'local', ctx); }
+    catch (e2) { loader.classList.add('hidden'); loader.classList.remove('flex'); showToast('Analysis failed: ' + e2.message, 'error'); return; }
+  }
+
+  state.analysisResult = result; state.bench.selected = []; state.fin.selected = []; state.fin.touched = false; state.assessId = null; state.cbaId = null;
+  bar.style.width = '100%'; status.innerText = 'Dashboard ready.';
+  return new Promise(resolve => setTimeout(() => {
+    loader.classList.add('hidden'); loader.classList.remove('flex');
+    try {
+      $('activeRoleLabel').innerText = result.roleTitle; $('candidateCountBadge').innerText = result.candidates.length;
+      const eb = $('exportReportBtn'); eb.classList.remove('hidden'); eb.classList.add('flex');
+      state.reportTab = 'overview'; switchTab('reports');
+      if (result.engine === 'local') showToast('AI unavailable (' + reason.substring(0, 80) + '). Showing evidence-based local estimates.', 'warning');
+      else showToast(`Evaluated ${result.candidates.length} candidates against "${result.roleTitle}".`, 'success');
+    } catch (e) { console.error(e); showToast('Dashboard render error: ' + e.message, 'error'); }
+    resolve(result);
+  }, 350));
+}
+
+
+// =========================================================================
+// TALENTLENS: COST-BENEFIT ENGINE (deterministic, PKR) + PANEL + COMPARISON
+// =========================================================================
+const FinEngine = {
+  toNum(v) { if (v === '' || v == null) return null; const n = Number(String(v).replace(/,/g, '').trim()); return Number.isFinite(n) ? n : NaN; },
+  validate(raw) {
+    const errors = {}, clean = {};
+    const num = (k, label, { min = 0, max = 1e10 } = {}) => {
+      const n = this.toNum(raw[k]);
+      if (n === null) { clean[k] = null; return; }
+      if (Number.isNaN(n)) errors[k] = `${label}: enter a valid number`;
+      else if (n < min) errors[k] = `${label}: must be at least ${min}`;
+      else if (n > max) errors[k] = `${label}: value is too large`;
+      else clean[k] = n;
+    };
+    num('roleSalary', 'Expected role salary'); num('candSalary', 'Candidate expected salary');
+    num('agencyPct', 'Agency fee %', { max: 30 }); num('multiplier', 'Revenue multiplier', { min: 1, max: 5 }); num('otherCosts', 'Additional costs');
+    if (clean.agencyPct == null && !errors.agencyPct) clean.agencyPct = 0;
+    if (clean.otherCosts == null && !errors.otherCosts) clean.otherCosts = 0;
+    if (clean.multiplier == null && !errors.multiplier) clean.multiplier = 1;
+    return { ok: !Object.keys(errors).length, errors, clean };
+  },
+  // Annual Salary Variance = Role Salary - Candidate Salary; Agency Fee = Candidate Salary x %;
+  // Total First-Year Cost = Candidate Salary + Fee + Other; Revenue = Candidate Salary x Multiplier;
+  // Net Benefit = Revenue - Total Cost; ROI = Net / Total x 100; Variance % = Variance / Role Salary x 100
+  compute(c) {
+    const ok = v => typeof v === 'number' && Number.isFinite(v);
+    const r = { roleSalary: ok(c.roleSalary) && c.roleSalary > 0 ? c.roleSalary : null, candSalary: ok(c.candSalary) && c.candSalary > 0 ? c.candSalary : null,
+      variance: null, variancePct: null, agencyFee: null, otherCosts: ok(c.otherCosts) ? c.otherCosts : 0, recruitCost: null, totalCost: null, revenue: null, net: null, roi: null,
+      agencyPct: ok(c.agencyPct) ? c.agencyPct : 0, multiplier: ok(c.multiplier) ? c.multiplier : null };
+    if (r.roleSalary != null && r.candSalary != null) { r.variance = r.roleSalary - r.candSalary; r.variancePct = (r.variance / r.roleSalary) * 100; }
+    if (r.candSalary != null) {
+      r.agencyFee = r.candSalary * r.agencyPct / 100;
+      r.recruitCost = r.agencyFee + r.otherCosts;
+      r.totalCost = r.candSalary + r.recruitCost;
+      if (r.multiplier != null) {
+        r.revenue = r.candSalary * r.multiplier; r.net = r.revenue - r.totalCost;
+        r.roi = r.totalCost > 0 ? (r.net / r.totalCost) * 100 : null;
+      }
+    }
+    return r;
+  }
+};
+
+const finKey = cid => `fin:${state.jobId}:${cid}`;
+function annualise(raw) { const r = { ...raw }; if (r.salaryMode === 'monthly') { const m = FinEngine.toNum(r.candMonthly); r.candSalary = (m == null || Number.isNaN(m)) ? (m === null ? '' : 'x') : m * 12; } return r; }
+function finDefaults() { return { roleSalary: Store.get(`role:${state.jobId}`, '') || '', salaryMode: 'annual', candSalary: '', candMonthly: '', agencyPct: 0, multiplier: 1, otherCosts: '' }; }
+const loadFin = cid => ({ ...finDefaults(), ...(Store.get(finKey(cid), {}) || {}) });
+function finResultFor(c) {
+  const raw = loadFin(c.id); const v = FinEngine.validate(annualise(raw));
+  if (!v.ok || !(v.clean.candSalary > 0)) return null;
+  return FinEngine.compute(v.clean);
+}
+
+function cbaTemplate(c, u) {
+  const inp = 'w-full px-3 py-2 rounded-lg border border-pwc-line text-sm font-semibold focus:border-pwc-orange num';
+  return `<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+  <div class="lg:col-span-5 glass-card rounded-2xl p-6 space-y-5">
+    <div><span class="eyebrow">Financial inputs (PKR)</span><h3 class="font-serif text-lg font-bold">${esc(c.name)} <span class="text-xs font-sans font-medium text-pwc-grey">${esc(c.id)}</span></h3>
+      <p class="text-xs text-pwc-grey mt-1">Annual figures unless stated. Inputs are saved against this candidate and job.</p></div>
+    <div><label for="${u}-role" class="block text-xs font-semibold text-pwc-slate mb-1">Expected role salary (annual budget)</label><input id="${u}-role" data-f="roleSalary" inputmode="numeric" placeholder="e.g. 2,500,000" class="${inp}"></div>
+    <div><div class="flex items-center justify-between mb-1"><label for="${u}-cand" class="block text-xs font-semibold text-pwc-slate">Candidate expected salary</label>
+        <div role="group" aria-label="Salary entry mode" class="inline-flex rounded-lg border border-pwc-line overflow-hidden text-[11px] font-bold"><button type="button" data-f="modeAnnual" class="px-2.5 py-1">Annual</button><button type="button" data-f="modeMonthly" class="px-2.5 py-1">Monthly</button></div></div>
+      <input id="${u}-cand" data-f="candSalary" inputmode="numeric" placeholder="Annual, e.g. 2,000,000" class="${inp}">
+      <input id="${u}-candm" data-f="candMonthly" inputmode="numeric" placeholder="Monthly, e.g. 166,667" aria-label="Candidate expected monthly salary" class="${inp} hidden">
+      <p data-f="annualised" class="text-[11px] text-pwc-grey mt-1"></p></div>
+    <div><div class="flex justify-between text-xs font-semibold text-pwc-slate mb-1"><label for="${u}-agency">Recruitment agency fee (% of expected salary)</label><span data-f="agencyLabel" class="text-pwc-burgundy font-bold num">0%</span></div>
+      <input id="${u}-agency" type="range" data-f="agencySlider" min="0" max="30" step="0.5" value="0" class="w-full" aria-label="Agency fee percentage">
+      <div class="flex items-center gap-2 mt-1"><input data-f="agencyPct" inputmode="decimal" aria-label="Agency fee percentage (number)" class="${inp} !w-24"><span class="text-xs text-pwc-grey">% = <strong data-f="agencyFeeText" class="num text-pwc-charcoal">PKR 0</strong></span></div></div>
+    <div><div class="flex justify-between text-xs font-semibold text-pwc-slate mb-1"><label for="${u}-mult">Revenue multiplier (assumption)</label><span data-f="multLabel" class="text-pwc-burgundy font-bold num">1.0x</span></div>
+      <input id="${u}-mult" type="range" data-f="multSlider" min="1" max="5" step="0.1" value="1" class="w-full" aria-label="Revenue multiplier">
+      <div class="flex items-center gap-2 mt-1"><input data-f="multiplier" inputmode="decimal" aria-label="Revenue multiplier (number)" class="${inp} !w-24"><span class="text-xs text-pwc-grey">x annual expected salary</span></div>
+      <p class="text-[11px] text-pwc-grey mt-1">Scenario assumption: projected annual revenue = expected salary × multiplier. It is not a measure of actual productivity.</p></div>
+    <div><label for="${u}-other" class="block text-xs font-semibold text-pwc-slate mb-1">Additional one-off recruitment costs (verification, onboarding, admin)</label><input id="${u}-other" data-f="otherCosts" inputmode="numeric" placeholder="e.g. 150,000" class="${inp}"></div>
+    <p data-f="errors" role="alert" class="text-xs text-rose-700 font-semibold"></p>
+    <div class="flex items-center gap-3"><button type="button" data-f="reset" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-pwc-line hover:border-pwc-orange">Reset inputs</button><span data-f="saved" class="text-[11px] text-pwc-grey"></span></div>
+  </div>
+  <div class="lg:col-span-7 space-y-6">
+    <div data-f="kpis" aria-live="polite" class="grid grid-cols-2 xl:grid-cols-4 gap-3"></div>
+    <div class="glass-card rounded-2xl p-5"><h4 class="text-sm font-bold mb-3">How the numbers fit together</h4><div data-f="breakdown" class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs"></div></div>
+    <div class="glass-card rounded-2xl p-5"><h4 class="text-sm font-bold mb-1">First-year cost vs projected revenue</h4><div class="relative h-56"><canvas data-f="chart" role="img" aria-label="Stacked bar comparing first-year hiring cost with projected annual revenue"></canvas></div>
+      <p data-f="note" class="mt-3 text-xs text-pwc-slate leading-relaxed"></p></div>
+  </div>
+</div>`;
+}
+
+function renderCBA(root, cand) {
+  if (root._chart) { root._chart.destroy(); root._chart = null; }
+  const u = 'u' + Math.random().toString(36).slice(2, 6);
+  root.innerHTML = cbaTemplate(cand, u);
+  const f = k => root.querySelector(`[data-f="${k}"]`);
+  const raw = loadFin(cand.id);
+  const fmtIn = v => { const n = FinEngine.toNum(v); return (n == null || Number.isNaN(n)) ? (v == null ? '' : String(v)) : nf(n); };
+  f('roleSalary').value = fmtIn(raw.roleSalary); f('candSalary').value = fmtIn(raw.candSalary); f('candMonthly').value = fmtIn(raw.candMonthly);
+  f('agencyPct').value = raw.agencyPct; f('agencySlider').value = clamp(+raw.agencyPct || 0, 0, 30);
+  f('multiplier').value = raw.multiplier; f('multSlider').value = clamp(+raw.multiplier || 1, 1, 5); f('otherCosts').value = fmtIn(raw.otherCosts);
+  let mode = raw.salaryMode === 'monthly' ? 'monthly' : 'annual';
+
+  const setMode = m => {
+    mode = m; f('candSalary').classList.toggle('hidden', m === 'monthly'); f('candMonthly').classList.toggle('hidden', m !== 'monthly');
+    [['modeAnnual', 'annual'], ['modeMonthly', 'monthly']].forEach(([k, v]) => { const b = f(k); b.className = 'px-2.5 py-1 ' + (m === v ? 'bg-pwc-charcoal text-white' : 'bg-white text-pwc-slate'); b.setAttribute('aria-pressed', m === v); });
+  };
+  const read = () => ({ roleSalary: f('roleSalary').value, salaryMode: mode, candSalary: f('candSalary').value, candMonthly: f('candMonthly').value, agencyPct: f('agencyPct').value, multiplier: f('multiplier').value, otherCosts: f('otherCosts').value });
+
+  const kpi = (label, value, sub, tone) => `<div class="glass-card rounded-xl p-3.5 ${tone || ''}"><div class="text-[11px] font-semibold uppercase text-pwc-grey leading-tight">${label}</div><div class="text-base sm:text-lg font-bold mt-1 num break-words">${value}</div><div class="text-[11px] text-pwc-grey mt-0.5">${sub || ''}</div></div>`;
+
+  const refresh = (save = true) => {
+    const rawNow = read(); const ann = annualise(rawNow); const v = FinEngine.validate(ann);
+    f('errors').innerText = Object.values(v.errors).join(' · ');
+    const r = FinEngine.compute(v.clean);
+    f('agencyLabel').innerText = (Number.isFinite(v.clean.agencyPct) ? v.clean.agencyPct : 0) + '%';
+    f('multLabel').innerText = (Number.isFinite(v.clean.multiplier) ? v.clean.multiplier : 1).toFixed(1) + 'x';
+    f('agencySlider').setAttribute('aria-valuetext', f('agencyLabel').innerText); f('multSlider').setAttribute('aria-valuetext', f('multLabel').innerText);
+    f('agencyFeeText').innerText = fmtPKR(r.agencyFee == null ? 0 : r.agencyFee);
+    f('annualised').innerText = mode === 'monthly' ? (r.candSalary != null ? `Annualised: ${fmtPKR(r.candSalary)} (monthly × 12)` : 'Enter a monthly salary to annualise (× 12).') : '';
+    const missingSal = r.candSalary == null;
+    const varTone = r.variance == null ? '' : r.variance >= 0 ? 'border-l-4 border-l-emerald-600' : 'border-l-4 border-l-rose-600';
+    f('kpis').innerHTML = [
+      kpi('Expected role salary', fmtPKR(r.roleSalary), 'Annual budget'),
+      kpi('Candidate expected salary', fmtPKR(r.candSalary), 'Annual'),
+      kpi('Annual salary variance', fmtPKR(r.variance), r.variance == null ? 'Needs both salaries' : `${fmtSigned(r.variancePct)} of budget · ${r.variance >= 0 ? 'budget saving' : 'over budget'}`, varTone),
+      kpi('Recruitment agency fee', fmtPKR(r.agencyFee), `${r.agencyPct}% of expected salary`),
+      kpi('Total first-year hiring cost', fmtPKR(r.totalCost), 'Salary + agency fee + other'),
+      kpi('Projected annual revenue', fmtPKR(r.revenue), 'Assumption-based scenario'),
+      kpi('Est. first-year net benefit', fmtPKR(r.net), 'Revenue − total cost', r.net == null ? '' : r.net >= 0 ? 'border-l-4 border-l-emerald-600' : 'border-l-4 border-l-rose-600'),
+      kpi('Est. first-year ROI', r.roi == null ? '—' : fmtSigned(r.roi), r.roi == null ? 'Needs candidate salary & multiplier' : 'Net benefit ÷ total cost', 'border-l-4 border-l-pwc-orange')
+    ].join('');
+    const row = (a, b, c) => `<div class="rounded-lg bg-pwc-light p-3"><div class="font-bold text-pwc-charcoal">${a}</div><div class="num text-sm font-bold mt-0.5">${b}</div><div class="text-pwc-grey mt-0.5">${c}</div></div>`;
+    f('breakdown').innerHTML = [
+      row('Salary budget savings', fmtPKR(r.variance), 'Role budget minus candidate expectation'),
+      row('Recruitment expenditure', fmtPKR(r.recruitCost), 'Agency fee + additional one-off costs'),
+      row('Projected revenue contribution', fmtPKR(r.revenue), `Scenario: ${r.multiplier == null ? '—' : r.multiplier.toFixed(1) + 'x'} expected salary`),
+      row('Net financial benefit & ROI', `${fmtPKR(r.net)} · ${r.roi == null ? '—' : fmtSigned(r.roi)}`, 'Revenue minus total first-year cost')
+    ].join('');
+    f('note').innerText = missingSal ? 'Enter the candidate’s expected salary to see costs, benefit and ROI. No ROI is shown while required inputs are missing.'
+      : `Total first-year cost ${fmtPKR(r.totalCost)} against projected revenue ${fmtPKR(r.revenue)}. This is a scenario based on the multiplier you set, not verified productivity. Read it together with competency fit and mandatory requirements.`;
+    drawChart(r);
+    if (save) { Store.set(finKey(cand.id), rawNow); if (FinEngine.toNum(rawNow.roleSalary) > 0) Store.set(`role:${state.jobId}`, rawNow.roleSalary); f('saved').innerText = 'Saved'; }
+  };
+  const drawChart = r => {
+    const cv = f('chart'); if (typeof Chart === 'undefined' || !cv) return;
+    if (root._chart) root._chart.destroy();
+    root._chart = new Chart(cv.getContext('2d'), { type: 'bar',
+      data: { labels: ['First-year cost', 'Projected revenue'], datasets: [
+        { label: 'Salary', data: [r.candSalary || 0, 0], backgroundColor: '#2D2D2D', stack: 's' },
+        { label: 'Agency fee', data: [r.agencyFee || 0, 0], backgroundColor: '#FD5108', stack: 's' },
+        { label: 'Other costs', data: [r.otherCosts || 0, 0], backgroundColor: '#FFB600', stack: 's' },
+        { label: 'Projected revenue (assumption)', data: [0, r.revenue || 0], backgroundColor: '#0072B2', stack: 's' }] },
+      options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, animation: { duration: 250 }, plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: c => `${c.dataset.label}: ${fmtPKR(c.raw)}` } } },
+        scales: { x: { stacked: true, ticks: { callback: v => 'PKR ' + (v / 1e6).toFixed(1) + 'M' } }, y: { stacked: true } } } });
+  };
+
+  f('modeAnnual').onclick = () => { setMode('annual'); refresh(); };
+  f('modeMonthly').onclick = () => { setMode('monthly'); refresh(); };
+  ['roleSalary', 'candSalary', 'candMonthly', 'otherCosts'].forEach(k => f(k).addEventListener('input', () => refresh()));
+  f('agencySlider').addEventListener('input', () => { f('agencyPct').value = f('agencySlider').value; refresh(); });
+  f('agencyPct').addEventListener('input', () => { const n = FinEngine.toNum(f('agencyPct').value); if (n != null && !Number.isNaN(n)) f('agencySlider').value = clamp(n, 0, 30); refresh(); });
+  f('multSlider').addEventListener('input', () => { f('multiplier').value = (+f('multSlider').value).toFixed(1); refresh(); });
+  f('multiplier').addEventListener('input', () => { const n = FinEngine.toNum(f('multiplier').value); if (n != null && !Number.isNaN(n)) f('multSlider').value = clamp(n, 1, 5); refresh(); });
+  f('reset').onclick = () => { Store.del(finKey(cand.id)); renderCBA(root, cand); };
+  setMode(mode); refresh(false);
+  root._refresh = refresh;
+}
+
+// ----- Main Cost-Benefit tab -----
+function candOptions(selId) { return cands().map(c => `<option value="${esc(c.id)}"${c.id === selId ? ' selected' : ''}>#${c.rank} ${esc(c.name)} (${esc(c.id)})</option>`).join(''); }
+function renderCBATab() {
+  if (!state.cbaId || !candById(state.cbaId)) state.cbaId = cands()[0] ? cands()[0].id : null;
+  $('cbaCandSelect').innerHTML = candOptions(state.cbaId);
+  const c = candById(state.cbaId); if (c) renderCBA($('cbaRoot'), c);
+}
+function openCBA(id) { state.cbaId = id; renderCBATab(); }
+
+// ----- Financial comparison (Reports & Analytics) -----
+function finRowFor(c) {
+  const r = finResultFor(c), m = mandatorySummary(c);
+  return { c, r, id: c.id, name: c.name, rank: c.rank, fit: c.overallFitScore, status: c.qualificationStatus, mand: m, align: weightedAlignment(c).score,
+    salary: r && r.candSalary, variance: r && r.variance, variancePct: r && r.variancePct, agencyFee: r && r.agencyFee, recruitCost: r && r.recruitCost, totalCost: r && r.totalCost, revenue: r && r.revenue, net: r && r.net, roi: r && r.roi };
+}
+function sortedFinRows(ids, key, dir) {
+  const rows = ids.map(candById).filter(Boolean).map(finRowFor);
+  const val = x => key === 'rank' ? x.rank : x[key];
+  rows.sort((a, b) => {
+    const av = val(a), bv = val(b);
+    if (av == null && bv == null) return a.rank - b.rank; if (av == null) return 1; if (bv == null) return -1;
+    return dir === 'asc' ? av - bv : bv - av;
+  });
+  return rows;
+}
+function renderFinPicker() {
+  state.fin.selected = state.fin.selected.filter(id => cands().some(c => c.id === id));
+  $('finPicker').innerHTML = cands().map(c => `<label class="flex items-center gap-2 text-xs p-2 rounded-lg border border-pwc-line hover:border-pwc-orange cursor-pointer"><input type="checkbox" class="w-4 h-4 accent-[#FD5108]" value="${esc(c.id)}" ${state.fin.selected.includes(c.id) ? 'checked' : ''} onchange="toggleFin(this.value,this.checked)"><span class="font-semibold truncate">#${c.rank} ${esc(c.name)}</span></label>`).join('');
+}
+function toggleFin(id, on) { const s = new Set(state.fin.selected); on ? s.add(id) : s.delete(id); state.fin.selected = [...s]; state.fin.touched = true; renderFinCompare(true); }
+function finTableData(rows) {
+  const head = ['Candidate', 'Expected salary', 'Salary variance (PKR)', 'Variance %', 'Agency fee', 'Total hiring cost', 'Projected revenue', 'Net benefit', 'ROI', 'JD match', 'Qualification', 'Mandatory met'];
+  const body = rows.map(x => [`${x.name} (${x.id})`, fmtPKR(x.salary), fmtPKR(x.variance), x.variancePct == null ? '—' : fmtSigned(x.variancePct), fmtPKR(x.agencyFee), fmtPKR(x.totalCost), fmtPKR(x.revenue), fmtPKR(x.net), x.roi == null ? '—' : fmtSigned(x.roi), x.fit + '%', x.status, x.mand.total ? `${x.mand.met}/${x.mand.total}` : 'n/a']);
+  return { head, body };
+}
+function renderFinCompare(fromToggle) {
+  if (!fromToggle) { if (!state.fin.touched && !state.fin.selected.length) state.fin.selected = cands().map(c => c.id); renderFinPicker(); }
+  const rows = sortedFinRows(state.fin.selected, $('finSortKey').value, $('finSortDir').value);
+  const t = finTableData(rows);
+  const missing = rows.filter(x => !x.r).length;
+  $('finCmpTable').innerHTML = `<thead class="bg-pwc-charcoal text-white"><tr>${t.head.map(h => `<th scope="col" class="py-2.5 px-3 font-semibold whitespace-nowrap">${h}</th>`).join('')}</tr></thead>
+    <tbody class="divide-y divide-pwc-line bg-white">${rows.map((x, i) => `<tr class="hover:bg-pwc-surface"><th scope="row" class="py-2.5 px-3 text-left font-bold whitespace-nowrap">${esc(x.name)}<div class="text-[10px] font-normal text-pwc-grey">${esc(x.id)} · rank #${x.rank}</div></th>${t.body[i].slice(1).map((v, k) => `<td class="py-2.5 px-3 num whitespace-nowrap ${k === 7 && x.roi != null ? (x.roi >= 0 ? 'text-emerald-700 font-bold' : 'text-rose-700 font-bold') : ''}">${esc(v)}</td>`).join('')}</tr>`).join('') || '<tr><td class="p-4 text-pwc-grey" colspan="12">Select at least one candidate.</td></tr>'}</tbody>`
+    + (missing ? `<caption class="caption-bottom text-left text-[11px] text-pwc-grey p-2">${missing} candidate(s) have no salary inputs yet. Enter them in Cost-Benefit Analysis.</caption>` : '');
+}
+function renderFinPickerIfNeeded() { const el = $('finPicker'), sig = cands().map(c => c.id).join(','); if (el.dataset.sig !== sig) { state.fin.selected = state.fin.selected.filter(id => cands().some(c => c.id === id)); renderFinPicker(); el.dataset.sig = sig; } }
+
+
+// =========================================================================
+// TALENTLENS: REPORTS & ANALYTICS, RANKING, CANDIDATE ASSESSMENT, BENCHMARKING, EXPORTS
+// =========================================================================
+const getBadge = s => { const m = { 'Optimal Fit': 'bg-emerald-50 text-emerald-800 border-emerald-200', 'Over-Qualified': 'bg-amber-50 text-amber-800 border-amber-200', 'Under-Qualified': 'bg-rose-50 text-rose-800 border-rose-200' }; return `<span class="px-2 py-0.5 rounded-md border text-[11px] font-bold ${m[s] || m['Optimal Fit']}">${esc(s)}</span>`; };
+const getStatusBadgeHTML = getBadge;
+const wrapLabel = l => { const w = l.split(' '); const out = []; let cur = ''; w.forEach(x => { if ((cur + ' ' + x).trim().length > 16 && cur) { out.push(cur); cur = x; } else cur = (cur + ' ' + x).trim(); }); if (cur) out.push(cur); return out; };
+const hexA = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
+const dimLabel = k => DIMENSIONS[k].label;
+
+// ---------- Reports shell ----------
+const REPORT_TABS = [{ id: 'overview', label: 'Screening Overview' }, { id: 'ranking', label: 'Candidate Ranking' }, { id: 'benchmark', label: 'Competency Benchmarking' }, { id: 'fincmp', label: 'Financial Comparison' }];
+function pillClass(on) { return 'px-3.5 py-2 rounded-lg text-xs font-bold border transition ' + (on ? 'bg-pwc-charcoal text-white border-pwc-charcoal' : 'bg-white text-pwc-slate border-pwc-line hover:border-pwc-orange'); }
+function goReports(tab) { state.reportTab = tab; if (state.tab === 'reports') renderReports(); else switchTab('reports'); }
+function renderReports() {
+  $('reportTabs').innerHTML = REPORT_TABS.map(t => `<button role="tab" aria-selected="${state.reportTab === t.id}" onclick="goReports('${t.id}')" class="${pillClass(state.reportTab === t.id)}">${t.label}</button>`).join('');
+  REPORT_TABS.forEach(t => $('rp-' + t.id).classList.toggle('hidden', t.id !== state.reportTab));
+  if (state.reportTab === 'overview') renderOverview();
+  if (state.reportTab === 'ranking') { renderRankingList(state.analysisResult); filterCandidates(state.activeFilter || 'ALL'); }
+  if (state.reportTab === 'benchmark') renderBenchmark();
+  if (state.reportTab === 'fincmp') renderFinCompare();
+}
+
+function renderOverview() {
+  const data = state.analysisResult, c = data.candidates, top = c[0];
+  $('kpiTopCandidate').innerText = top ? top.name : '—';
+  $('kpiTopScore').innerText = top ? `${top.overallFitScore}% match` : '0%';
+  $('kpiOptimalCount').innerText = `${c.filter(x => x.qualificationStatus === 'Optimal Fit').length} / ${c.length}`;
+  $('kpiOverCount').innerText = c.filter(x => x.qualificationStatus === 'Over-Qualified').length;
+  $('kpiUnderCount').innerText = c.filter(x => x.qualificationStatus === 'Under-Qualified').length;
+  $('executiveSummaryText').innerText = data.executiveSummary;
+  if (typeof Chart === 'undefined') return;
+  if (state.charts.bar) state.charts.bar.destroy();
+  state.charts.bar = new Chart($('overviewBarChart').getContext('2d'), { type: 'bar',
+    data: { labels: c.map(x => x.name), datasets: [{ label: 'JD match score (%)', data: c.map(x => x.overallFitScore), backgroundColor: c.map(x => x.qualificationStatus === 'Optimal Fit' ? '#FD5108' : x.qualificationStatus === 'Over-Qualified' ? '#FFB600' : '#DB536A'), borderRadius: 6, maxBarThickness: 40 }] },
+    options: { responsive: true, maintainAspectRatio: false, animation: { duration: 500 }, plugins: { legend: { display: false }, tooltip: { callbacks: { afterLabel: ctx => 'Status: ' + c[ctx.dataIndex].qualificationStatus } } }, scales: { y: { beginAtZero: true, max: 100, grid: { color: '#EFEDE8' } }, x: { grid: { display: false } } } } });
+  if (state.charts.doughnut) state.charts.doughnut.destroy();
+  const cnt = s => c.filter(x => x.qualificationStatus === s).length;
+  state.charts.doughnut = new Chart($('tierDoughnutChart').getContext('2d'), { type: 'doughnut',
+    data: { labels: ['Optimal Fit', 'Over-Qualified', 'Under-Qualified'], datasets: [{ data: [cnt('Optimal Fit'), cnt('Over-Qualified'), cnt('Under-Qualified')], backgroundColor: ['#FD5108', '#FFB600', '#DB536A'], borderWidth: 2, borderColor: '#FFF' }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '66%', plugins: { legend: { position: 'right', labels: { boxWidth: 12, padding: 14 } } } } });
+}
+
+// ---------- Ranking list with rationale ----------
+function renderRankingList(data) {
+  const b = { ai: ['AI-evaluated', 'bg-emerald-50 text-emerald-700 border-emerald-200'], local: ['Local engine: evidence-based estimates, AI not used', 'bg-amber-50 text-amber-800 border-amber-200'] }[data.engine] || ['', ''];
+  const eb = $('engineBadge'); eb.innerText = b[0]; eb.className = 'self-start px-2.5 py-1 rounded-full border text-[11px] font-semibold ' + b[1];
+  $('rankingList').innerHTML = data.candidates.map(c => `<li class="border-b border-pwc-line last:border-0"><details ${c.rank === 1 ? 'open' : ''}>
+    <summary class="flex items-center gap-3 py-3 cursor-pointer"><span class="w-7 h-7 rounded-full bg-pwc-charcoal text-white text-xs font-bold flex items-center justify-center shrink-0">${c.rank}</span>
+      <div class="min-w-0 flex-1"><div class="text-sm font-bold truncate">${esc(c.name)} <span class="text-[10px] font-medium text-pwc-grey">${esc(c.id)}</span></div><div class="text-[11px] text-pwc-grey truncate">${esc(c.currentRoleTitle)} • ${c.yearsExperience || '?'} yrs exp.</div></div>
+      ${getBadge(c.qualificationStatus)}<span class="text-sm font-bold text-pwc-burgundy w-12 text-right num">${c.overallFitScore}%</span></summary>
+    <div class="pb-4 pl-10 pr-2 text-xs text-pwc-slate space-y-2">
+      <p class="font-bold text-pwc-charcoal">Why ${esc(c.name)} is ranked #${c.rank}</p>
+      <ul class="list-disc list-inside space-y-1">${c.ranking.reasons.map(r => `<li>${esc(r)}</li>`).join('')}</ul>
+      ${c.ranking.compare.length ? `<div class="rounded-lg bg-pwc-light p-2.5 space-y-1"><strong class="text-pwc-charcoal">Head-to-head</strong>${c.ranking.compare.map(r => `<p>${esc(r)}</p>`).join('')}</div>` : ''}
+      ${c.strengths.length ? `<div><strong class="text-pwc-charcoal">Evidence for strengths</strong><ul class="list-disc list-inside">${c.strengths.map(r => `<li>${esc(r)}</li>`).join('')}</ul></div>` : ''}
+      ${c.gaps.length ? `<div><strong class="text-pwc-charcoal">Gaps / risks</strong><ul class="list-disc list-inside">${c.gaps.map(r => `<li>${esc(r)}</li>`).join('')}</ul></div>` : ''}
+      <button onclick="openAssessment('${esc(c.id)}','matching')" class="text-xs font-bold text-pwc-burgundy hover:underline">Open full assessment →</button>
+    </div></details></li>`).join('');
+}
+
+function filterCandidates(status) {
+  state.activeFilter = status;
+  document.querySelectorAll('.filter-pill').forEach(btn => {
+    const on = btn.getAttribute('onclick').includes(`'${status}'`);
+    btn.className = 'filter-pill px-3 py-1.5 rounded-lg text-xs font-semibold ' + (on ? 'bg-pwc-charcoal text-white' : 'bg-white border border-pwc-line text-pwc-slate hover:border-pwc-orange');
+  });
+  renderCandidateCards(status);
+}
+function renderCandidateCards(filterStatus) {
+  const grid = $('candidateCardsGrid'), all = cands();
+  const list = filterStatus === 'ALL' ? all : all.filter(c => c.qualificationStatus === filterStatus);
+  if (!list.length) { grid.innerHTML = `<div class="col-span-full text-center py-8 bg-white rounded-2xl border border-pwc-line text-xs text-pwc-grey">No candidates match the "${esc(filterStatus)}" filter.</div>`; return; }
+  grid.innerHTML = list.map(c => {
+    const m = mandatorySummary(c), r = finResultFor(c), id = esc(c.id);
+    return `<div class="glass-card rounded-2xl p-5 flex flex-col justify-between ${c.rank === 1 ? 'ring-2 ring-pwc-orange/70' : ''}"><div>
+      <div class="flex items-start justify-between gap-3"><div><div class="flex items-center gap-2 flex-wrap"><h4 class="text-base font-bold"><span class="text-pwc-burgundy">#${c.rank}</span> ${esc(c.name)}</h4>${c.rank === 1 ? '<span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded bg-pwc-orange text-black">Best fit</span>' : ''}${c.checks && c.checks.length ? `<span class="px-2 py-0.5 text-[10px] font-bold rounded bg-amber-100 text-amber-900" title="${esc(c.checks.join(' | '))}">⚠ Review data</span>` : ''}</div>
+        <p class="text-xs text-pwc-grey mt-0.5">${esc(c.currentRoleTitle)} • <strong>${c.yearsExperience || '?'} yrs</strong> • ${id}</p></div>
+        <div class="text-right shrink-0"><div class="text-xl font-bold text-pwc-burgundy num">${c.overallFitScore}%</div><span class="text-[10px] uppercase tracking-wider text-pwc-grey">JD match</span></div></div>
+      <div class="mt-3 flex flex-wrap items-center gap-2">${getBadge(c.qualificationStatus)}<span class="text-[11px] text-pwc-slate">Mandatory: <strong>${m.total ? m.met + '/' + m.total + ' met' : 'n/a'}</strong></span><span class="text-[11px] text-pwc-slate">ROI: <strong>${r && r.roi != null ? fmtSigned(r.roi) : 'not entered'}</strong></span></div>
+      <div class="mt-3 flex flex-wrap gap-1.5">${c.coreCompetencies.map(x => `<span class="px-2 py-0.5 rounded-md bg-pwc-light text-[11px] font-medium">${esc(x)}</span>`).join('')}</div>
+      <div class="mt-3.5 p-3 rounded-xl bg-pwc-surface border border-pwc-line text-xs text-pwc-slate space-y-2">
+        <div><strong class="text-pwc-charcoal block mb-0.5">Why ranked #${c.rank}</strong><span>${esc(c.ranking.compare[0] || c.ranking.reasons[0])}</span></div>
+        <div><strong class="text-pwc-charcoal block mb-0.5">Qualification rationale</strong><span>${esc(c.qualificationRationale)}</span></div>
+        ${c.bestFitRationale ? `<div class="pt-2 border-t border-pwc-line text-pwc-burgundy"><strong class="block mb-0.5">Why best fit</strong><span>${esc(c.bestFitRationale)}</span></div>` : ''}</div></div>
+      <div class="mt-4 pt-3 border-t border-pwc-line flex flex-wrap items-center justify-between gap-2">
+        <button onclick="openAssessment('${id}','overview')" class="text-xs font-bold hover:text-pwc-burgundy">Open assessment</button>
+        <button onclick="benchFocus('${id}')" class="text-xs font-bold text-pwc-burgundy">Benchmark</button>
+        <button onclick="openCBA('${id}');switchTab('cba')" class="text-xs font-bold hover:text-pwc-burgundy">Cost-benefit</button></div></div>`;
+  }).join('');
+}
+
+// ---------- Candidate Assessment ----------
+const ASSESS_TABS = [{ id: 'overview', label: 'Candidate Overview' }, { id: 'matching', label: 'JD Matching' }, { id: 'competency', label: 'Competency Assessment' }, { id: 'cba', label: 'Cost-Benefit Analysis' }, { id: 'review', label: 'Recruiter Review' }];
+function openAssessment(id, sub) { state.assessId = id; if (sub) state.assessTab = sub; if (state.tab === 'assessment') renderAssessment(); else switchTab('assessment'); }
+function stepAssessment(d) { const l = cands(); const i = l.findIndex(c => c.id === state.assessId); if (i < 0) return; openAssessment(l[(i + d + l.length) % l.length].id); }
+function setAssessTab(t) { state.assessTab = t; renderAssessment(); }
+function renderAssessment() {
+  if (!state.assessId || !candById(state.assessId)) state.assessId = cands()[0] ? cands()[0].id : null;
+  const c = candById(state.assessId); if (!c) return;
+  $('assessCandSelect').innerHTML = candOptions(c.id);
+  const m = mandatorySummary(c);
+  $('assessHeader').innerHTML = `<div class="flex flex-wrap items-center gap-2"><h2 class="font-serif text-xl font-bold">${esc(c.name)}</h2>${getBadge(c.qualificationStatus)}<span class="text-xs text-pwc-grey">${esc(c.id)} · rank #${c.rank} of ${cands().length}</span></div><p class="text-xs text-pwc-grey">${esc(c.currentRoleTitle)} · ${c.yearsExperience || '?'} yrs · JD match ${c.overallFitScore}% · mandatory ${m.total ? m.met + '/' + m.total + ' met' : 'n/a'}</p>`;
+  $('assessTabs').innerHTML = ASSESS_TABS.map(t => `<button role="tab" aria-selected="${state.assessTab === t.id}" onclick="setAssessTab('${t.id}')" class="${pillClass(state.assessTab === t.id)}">${t.label}</button>`).join('');
+  const body = $('assessBody');
+  if (body._chart) { body._chart.destroy(); body._chart = null; }
+  if (state.assessTab === 'cba') return renderCBA(body, c);
+  body.innerHTML = ({ overview: assessOverview, matching: assessMatching, competency: assessCompetency, review: assessReview }[state.assessTab] || assessOverview)(c);
+  if (state.assessTab === 'competency') drawAssessRadar(c);
+  icons();
+}
+const listOr = (arr, none) => arr.length ? arr.map(x => `<li>${esc(x)}</li>`).join('') : `<li class="text-pwc-grey list-none">${none}</li>`;
+function assessOverview(c) {
+  const wh = c.workHistory.length ? c.workHistory.map(w => `<div class="pl-3 border-l-2 border-pwc-line"><div class="font-bold">${esc(w.roleTitle || 'Role not stated')}${w.verified === false ? ' <span class="text-[10px] font-semibold text-amber-700">⚠ unverified</span>' : ''}</div><div class="text-[11px] text-pwc-burgundy font-medium">${esc(w.companyName || 'Company not stated')} • ${esc(w.tenure || '')}</div>${w.keySummary ? `<p class="text-[11px] text-pwc-slate mt-0.5">${esc(w.keySummary)}</p>` : ''}</div>`).join('') : '<p class="text-pwc-grey text-xs">Work history not detected in CV text.</p>';
+  return `<div class="grid grid-cols-1 lg:grid-cols-3 gap-6"><div class="lg:col-span-2 space-y-6">
+    ${c.checks && c.checks.length ? `<div class="p-4 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900"><strong class="block mb-1">Data checks, please review</strong><ul class="list-disc list-inside space-y-0.5">${c.checks.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>` : ''}
+    <div class="glass-card rounded-2xl p-6"><h3 class="font-serif text-lg font-bold mb-3">Career history & tenure</h3><div class="space-y-3 text-xs">${wh}</div></div>
+    <div class="glass-card rounded-2xl p-6"><h3 class="font-serif text-lg font-bold mb-3">Demonstrated responsibilities</h3><ul class="list-disc list-inside space-y-1.5 text-xs text-pwc-slate">${listOr(c.demonstratedResponsibilities, 'None extracted')}</ul></div></div>
+    <div class="space-y-6"><div class="glass-card rounded-2xl p-6"><h3 class="font-serif text-lg font-bold mb-3">Education & credentials</h3><ul class="list-disc list-inside space-y-1 text-xs text-pwc-slate">${listOr(c.education, 'Not detected in CV text')}</ul></div>
+    <div class="glass-card rounded-2xl p-6 text-xs space-y-2"><h3 class="font-serif text-lg font-bold">Source</h3><p>File: <strong>${esc(c.fileName)}</strong></p><p>Candidate ID: <strong>${esc(c.id)}</strong></p><p>Engine: <strong>${state.analysisResult.engine === 'ai' ? 'AI-evaluated' : 'Local evidence engine'}</strong></p></div></div></div>`;
+}
+function assessMatching(c) {
+  const rv = getReview(c.id);
+  const mand = c.mandatoryChecks.length ? c.mandatoryChecks.map((m, i) => { const o = rv.overrides && rv.overrides[i]; const st = o === 'confirmed' ? 'met' : o === 'not_met' ? 'not_met' : m.status; const tone = { met: 'bg-emerald-50 text-emerald-800', not_met: 'bg-rose-50 text-rose-800', unclear: 'bg-amber-50 text-amber-800' }[st]; return `<tr><td class="py-2 px-3 align-top">${esc(m.requirement)}</td><td class="py-2 px-3 align-top"><span class="px-2 py-0.5 rounded text-[11px] font-bold ${tone}">${{ met: 'Met', not_met: 'Not met', unclear: 'Unclear' }[st]}${o ? ' (recruiter)' : ''}</span></td><td class="py-2 px-3 align-top text-pwc-slate">${esc(m.evidence || '—')}</td></tr>`; }).join('') : '<tr><td colspan="3" class="p-3 text-pwc-grey">No mandatory requirements were identified in the JD.</td></tr>';
+  return `<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="glass-card rounded-2xl p-6 space-y-3 text-xs"><h3 class="font-serif text-lg font-bold">Why ${esc(c.name)} is ranked #${c.rank}</h3><p class="font-bold">${esc(c.ranking.headline)}</p>
+      <ul class="list-disc list-inside space-y-1 text-pwc-slate">${c.ranking.reasons.map(r => `<li>${esc(r)}</li>`).join('')}</ul>
+      ${c.ranking.compare.length ? `<div class="rounded-lg bg-pwc-light p-3 space-y-1"><strong>Head-to-head</strong>${c.ranking.compare.map(r => `<p>${esc(r)}</p>`).join('')}</div>` : ''}
+      <p class="text-pwc-slate"><strong>Qualification rationale:</strong> ${esc(c.qualificationRationale)}</p></div>
+    <div class="space-y-6"><div class="glass-card rounded-2xl p-6 text-xs"><h3 class="font-serif text-lg font-bold mb-2">Evidence-backed strengths</h3><ul class="list-disc list-inside space-y-1 text-pwc-slate">${listOr(c.strengths, 'No strengths above the evidence threshold')}</ul>
+      <h3 class="font-serif text-lg font-bold mt-4 mb-2">Gaps & risks</h3><ul class="list-disc list-inside space-y-1 text-pwc-slate">${listOr(c.gaps, 'No gaps identified')}</ul></div>
+      <div class="glass-card rounded-2xl p-6 text-xs"><h3 class="font-serif text-lg font-bold mb-2">JD core competencies</h3><div class="flex flex-wrap gap-1.5">${(state.analysisResult.jdCoreCompetencies.length ? state.analysisResult.jdCoreCompetencies : ['None extracted']).map(x => `<span class="px-2.5 py-1 rounded-full bg-pwc-light border border-pwc-line font-semibold ${c.coreCompetencies.some(k => k.toLowerCase() === x.toLowerCase()) ? 'ring-1 ring-pwc-orange' : ''}">${esc(x)}</span>`).join('')}</div>
+      <h3 class="font-serif text-lg font-bold mt-4 mb-2">JD key responsibilities</h3><ul class="list-disc list-inside space-y-1 text-pwc-slate">${listOr(state.analysisResult.jdKeyResponsibilities, 'None extracted')}</ul></div></div>
+    <div class="lg:col-span-2 glass-card rounded-2xl p-6"><h3 class="font-serif text-lg font-bold mb-3">Mandatory qualification requirements</h3><div class="overflow-x-auto rounded-xl border border-pwc-line"><table class="min-w-full text-left text-xs"><thead class="bg-pwc-charcoal text-white"><tr><th class="py-2 px-3">Requirement (from JD)</th><th class="py-2 px-3">Result</th><th class="py-2 px-3">Evidence in CV</th></tr></thead><tbody class="divide-y divide-pwc-line bg-white">${mand}</tbody></table></div></div></div>`;
+}
+function assessCompetency(c) {
+  const w = getWeights(), tot = w.reduce((a, b) => a + b, 0), al = weightedAlignment(c);
+  const rows = c.dims.map((d, i) => `<tr><th scope="row" class="py-2.5 px-3 text-left font-bold align-top">${dimLabel(i)}<div class="font-normal text-[10px] text-pwc-grey">weight ${Math.round(w[i] / tot * 100)}%</div></th>
+    <td class="py-2.5 px-3 align-top w-48">${d.score == null ? '<span class="text-amber-800 font-semibold">Insufficient evidence</span>' : `<div class="flex items-center gap-2"><div class="flex-1 h-2 rounded bg-pwc-light"><div class="h-2 rounded bg-pwc-orange" style="width:${d.score}%"></div></div><span class="font-bold num">${d.score}</span></div>`}</td>
+    <td class="py-2.5 px-3 align-top num">${d.coverage}%</td><td class="py-2.5 px-3 align-top text-pwc-slate"><ul class="list-disc list-inside">${d.evidence.map(e => `<li>${esc(e)}</li>`).join('') || '<li class="list-none">—</li>'}</ul></td><td class="py-2.5 px-3 align-top text-pwc-grey">${d.source === 'ai' ? 'AI' : 'Local'}</td></tr>`).join('');
+  return `<div class="grid grid-cols-1 lg:grid-cols-12 gap-6"><div class="lg:col-span-5 glass-card rounded-2xl p-6"><h3 class="font-serif text-lg font-bold mb-1">Candidate vs JD benchmark</h3><p class="text-xs text-pwc-grey mb-3">Weighted alignment: <strong>${al.score == null ? '—' : al.score}</strong> (${al.scored}/5 dimensions scored) · evidence coverage ${avgCoverage(c)}%</p><div class="relative h-80"><canvas id="assessRadar" role="img" aria-label="Radar chart of ${esc(c.name)} against the JD benchmark"></canvas></div></div>
+    <div class="lg:col-span-7 glass-card rounded-2xl p-6"><h3 class="font-serif text-lg font-bold mb-3">Dimension scores & evidence</h3><div class="overflow-x-auto rounded-xl border border-pwc-line"><table class="min-w-full text-left text-xs"><thead class="bg-pwc-charcoal text-white"><tr><th class="py-2 px-3">Dimension</th><th class="py-2 px-3">Score</th><th class="py-2 px-3">Evidence coverage</th><th class="py-2 px-3">Evidence</th><th class="py-2 px-3">Source</th></tr></thead><tbody class="divide-y divide-pwc-line bg-white">${rows}</tbody></table></div></div></div>`;
+}
+function drawAssessRadar(c) {
+  const body = $('assessBody'), cv = document.getElementById('assessRadar'); if (!cv || typeof Chart === 'undefined') return;
+  body._chart = new Chart(cv.getContext('2d'), radarConfig([c]));
+}
+function reviewSaved(cid) { const el = document.getElementById('reviewSaved'); if (el) el.innerText = 'Saved ' + new Date().toLocaleTimeString(); }
+function saveReviewField(cid, field, value) { const r = getReview(cid); r[field] = value; Store.set(reviewKey(cid), r); reviewSaved(cid); }
+function saveOverride(cid, idx, value) { const r = getReview(cid); r.overrides = r.overrides || {}; if (value) r.overrides[idx] = value; else delete r.overrides[idx]; Store.set(reviewKey(cid), r); reviewSaved(cid); renderAssessment(); }
+function assessReview(c) {
+  const rv = getReview(c.id), m = mandatorySummary(c), r = finResultFor(c), al = weightedAlignment(c), id = esc(c.id);
+  const rows = c.mandatoryChecks.map((q, i) => `<tr><td class="py-2 px-3 align-top">${esc(q.requirement)}</td><td class="py-2 px-3 align-top">${{ met: 'Met', not_met: 'Not met', unclear: 'Unclear' }[q.status]}</td><td class="py-2 px-3 align-top"><label class="sr-only" for="ov${i}">Recruiter confirmation</label><select id="ov${i}" onchange="saveOverride('${id}',${i},this.value)" class="px-2 py-1 rounded border border-pwc-line text-xs bg-white"><option value="">Use engine result</option><option value="confirmed" ${rv.overrides && rv.overrides[i] === 'confirmed' ? 'selected' : ''}>Recruiter: confirmed met</option><option value="not_met" ${rv.overrides && rv.overrides[i] === 'not_met' ? 'selected' : ''}>Recruiter: not met</option></select></td></tr>`).join('') || '<tr><td colspan="3" class="p-3 text-pwc-grey">No mandatory requirements identified.</td></tr>';
+  return `<div class="grid grid-cols-1 lg:grid-cols-3 gap-6"><div class="lg:col-span-2 space-y-6">
+    <div class="glass-card rounded-2xl p-6"><h3 class="font-serif text-lg font-bold mb-3">Recruiter decision</h3>
+      <label for="decision" class="block text-xs font-semibold text-pwc-slate mb-1">Decision</label>
+      <select id="decision" onchange="saveReviewField('${id}','decision',this.value)" class="px-3 py-2 rounded-lg border border-pwc-line text-sm bg-white">${['', 'Shortlist', 'Interview', 'Hold', 'Reject'].map(o => `<option value="${o}" ${rv.decision === o ? 'selected' : ''}>${o || 'Not decided'}</option>`).join('')}</select>
+      <label for="notes" class="block text-xs font-semibold text-pwc-slate mt-4 mb-1">Review notes</label>
+      <textarea id="notes" rows="5" onchange="saveReviewField('${id}','notes',this.value)" class="w-full px-3 py-2 rounded-lg border border-pwc-line text-sm">${esc(rv.notes)}</textarea><p id="reviewSaved" class="text-[11px] text-pwc-grey mt-1">Saved locally in this browser.</p></div>
+    <div class="glass-card rounded-2xl p-6"><h3 class="font-serif text-lg font-bold mb-3">Confirm mandatory requirements</h3><div class="overflow-x-auto rounded-xl border border-pwc-line"><table class="min-w-full text-left text-xs"><thead class="bg-pwc-charcoal text-white"><tr><th class="py-2 px-3">Requirement</th><th class="py-2 px-3">Engine</th><th class="py-2 px-3">Recruiter</th></tr></thead><tbody class="divide-y divide-pwc-line bg-white">${rows}</tbody></table></div></div></div>
+    <div class="glass-card rounded-2xl p-6 text-xs space-y-2 h-fit"><h3 class="font-serif text-lg font-bold">Decision-support snapshot</h3>
+      <p>JD match: <strong>${c.overallFitScore}%</strong> · ${getBadge(c.qualificationStatus)}</p><p>Weighted competency alignment: <strong>${al.score == null ? '—' : al.score}</strong> (${al.scored}/5 scored)</p>
+      <p>Mandatory requirements: <strong>${m.total ? `${m.met} met, ${m.unmet} not met, ${m.unclear} unclear` : 'n/a'}</strong></p>
+      <p>Est. first-year ROI: <strong>${r && r.roi != null ? fmtSigned(r.roi) : 'not entered'}</strong> <span class="text-pwc-grey">(scenario; not a recommendation)</span></p>
+      <p class="text-pwc-grey">Financial attractiveness is shown beside fit and mandatory requirements; none of them alone decides the hire.</p></div></div>`;
+}
+
+// ---------- Radar (shared by benchmarking and candidate page) ----------
+function radarConfig(sel) {
+  const ds = [{ label: 'Target JD benchmark (100)', data: DIMENSIONS.map(() => 100), borderColor: '#FD5108', backgroundColor: 'rgba(253,81,8,0.16)', borderWidth: 3, pointRadius: 4, pointBackgroundColor: '#FD5108', pointStyle: 'circle' }];
+  sel.forEach((c, i) => { const col = SERIES_COLORS[i % SERIES_COLORS.length]; ds.push({ label: c.name, data: c.dims.map(d => d.score), borderColor: col, backgroundColor: hexA(col, 0.12), borderWidth: 2.5, borderDash: i % 2 ? [7, 4] : [], pointStyle: SERIES_POINTS[i % SERIES_POINTS.length], pointRadius: 5, pointHoverRadius: 7, pointBackgroundColor: col, spanGaps: true }); });
+  return { type: 'radar', data: { labels: DIMENSIONS.map(d => wrapLabel(d.label)), datasets: ds },
+    options: { responsive: true, maintainAspectRatio: false, animation: { duration: 350 },
+      scales: { r: { min: 0, max: 100, ticks: { stepSize: 20, backdropColor: 'transparent', color: '#6B6B6B' }, pointLabels: { font: { size: 12, weight: '600' }, color: '#2D2D2D' }, grid: { color: '#DDD9D1' }, angleLines: { color: '#DDD9D1' } } },
+      plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 14 } },
+        tooltip: { callbacks: { title: items => [].concat(items[0].label).join(' '), label: ctx => { if (ctx.datasetIndex === 0) return 'JD benchmark: 100'; const v = ctx.raw; return v == null ? `${ctx.dataset.label}: insufficient evidence` : [`${ctx.dataset.label}`, `Score: ${v}`, `JD benchmark: 100`, `Gap: ${100 - v} pts below benchmark`]; } } } } } };
+}
+
+// ---------- Competency Benchmarking ----------
+const benchSel = () => state.bench.selected.map(candById).filter(Boolean);
+function renderBenchmark() {
+  const ids = cands().map(c => c.id);
+  state.bench.selected = state.bench.selected.filter(id => ids.includes(id));
+  if (!state.bench.selected.length) state.bench.selected = cands().slice(0, 3).map(c => c.id);
+  $('benchPicker').innerHTML = cands().map(c => `<label class="flex items-center gap-2 text-xs p-2 rounded-lg border border-pwc-line hover:border-pwc-orange cursor-pointer"><input type="checkbox" class="w-4 h-4 accent-[#FD5108]" value="${esc(c.id)}" ${state.bench.selected.includes(c.id) ? 'checked' : ''} onchange="toggleBench(this.value,this.checked,this)"><span class="font-semibold truncate">#${c.rank} ${esc(c.name)}</span></label>`).join('');
+  renderWeights(); renderMethodology(); updateBenchmark();
+}
+function toggleBench(id, on, el) {
+  const s = state.bench.selected.filter(x => x !== id);
+  if (on) { if (s.length >= MAX_BENCH) { if (el) el.checked = false; showToast(`You can compare up to ${MAX_BENCH} candidates at once.`, 'warning'); return; } s.push(id); }
+  state.bench.selected = s; updateBenchmark();
+}
+function benchSelectTop(n) { state.bench.selected = cands().slice(0, Math.min(n, MAX_BENCH)).map(c => c.id); renderBenchmark(); }
+function benchClear() { state.bench.selected = []; $('benchPicker').querySelectorAll('input').forEach(i => i.checked = false); updateBenchmark(); }
+function benchFocus(id) { if (!state.bench.selected.includes(id)) state.bench.selected = [...state.bench.selected.slice(0, MAX_BENCH - 1), id]; goReports('benchmark'); }
+
+function updateBenchmark() {
+  const sel = benchSel();
+  if (typeof Chart !== 'undefined' && $('benchRadar')) { if (state.charts.bench) state.charts.bench.destroy(); state.charts.bench = new Chart($('benchRadar').getContext('2d'), radarConfig(sel)); }
+  const lacking = sel.filter(c => c.dims.some(d => d.score == null)).map(c => `${c.name} (${c.dims.filter(d => d.score == null).map(d => dimLabel(DIMENSIONS.findIndex(x => x.key === d.key))).join(', ')})`);
+  $('benchNote').innerText = sel.length ? (lacking.length ? 'Insufficient evidence, not plotted and not scored as zero: ' + lacking.join('; ') + '.' : 'All five dimensions have evidence for every selected candidate.') : 'Select at least one candidate to compare.';
+  const w = getWeights(), tot = w.reduce((a, b) => a + b, 0);
+  $('benchGap').innerHTML = sel.map((c, i) => `<div class="rounded-xl border border-pwc-line p-4"><div class="flex items-center gap-2 mb-2"><span class="w-3 h-3 rounded-full" style="background:${SERIES_COLORS[i % 8]}"></span><strong class="text-sm">${esc(c.name)}</strong></div>
+    ${c.dims.map((d, k) => `<div class="mb-2"><div class="flex justify-between text-[11px]"><span>${dimLabel(k)}</span><span class="num font-bold">${d.score == null ? 'n/a' : 'gap ' + (100 - d.score)}</span></div>
+      <div class="h-2 rounded bg-pwc-light overflow-hidden">${d.score == null ? '<div class="h-2 w-full" style="background:repeating-linear-gradient(45deg,#E4E1DB,#E4E1DB 4px,#fff 4px,#fff 8px)"></div>' : `<div class="h-2" style="width:${d.score}%;background:${SERIES_COLORS[i % 8]}"></div>`}</div>
+      <div class="text-[10px] text-pwc-grey">${d.score == null ? 'Insufficient evidence' : 'Score ' + d.score} · evidence coverage ${d.coverage}%</div></div>`).join('')}</div>`).join('') || '<p class="text-xs text-pwc-grey">Select candidates above.</p>';
+  $('benchHighlights').innerHTML = sel.map((c, i) => {
+    const sc = c.dims.map((d, k) => ({ k, s: d.score })).filter(x => x.s != null);
+    const hi = sc.length ? sc.reduce((a, b) => b.s > a.s ? b : a) : null, lo = sc.length ? sc.reduce((a, b) => b.s < a.s ? b : a) : null, al = weightedAlignment(c), av = simpleAverage(c);
+    return `<div class="rounded-xl border border-pwc-line p-4 text-xs space-y-1"><div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full" style="background:${SERIES_COLORS[i % 8]}"></span><strong class="text-sm">${esc(c.name)}</strong></div>
+      <p>Highest: <strong>${hi ? dimLabel(hi.k) + ' (' + hi.s + ')' : 'n/a'}</strong></p><p>Lowest: <strong>${lo ? dimLabel(lo.k) + ' (' + lo.s + ')' : 'n/a'}</strong></p>
+      <p>Average competency: <strong>${av == null ? 'n/a' : av}</strong> · Weighted alignment: <strong>${al.score == null ? 'n/a' : al.score}</strong> <span class="text-pwc-grey">(${al.scored}/5 scored)</span></p>
+      <p>Overall JD match: <strong>${c.overallFitScore}%</strong> · Evidence coverage: <strong>${avgCoverage(c)}%</strong></p></div>`;
+  }).join('');
+  $('benchTable').innerHTML = `<thead class="bg-pwc-charcoal text-white"><tr><th scope="col" class="py-2.5 px-3">Candidate</th>${DIMENSIONS.map(d => `<th scope="col" class="py-2.5 px-3">${d.label}</th>`).join('')}<th scope="col" class="py-2.5 px-3">Average</th><th scope="col" class="py-2.5 px-3">Weighted alignment</th><th scope="col" class="py-2.5 px-3">JD match</th></tr></thead>
+    <tbody class="divide-y divide-pwc-line bg-white"><tr class="bg-orange-50"><th scope="row" class="py-2.5 px-3 text-left font-bold">Target JD benchmark</th>${DIMENSIONS.map(() => '<td class="py-2.5 px-3 num font-bold">100</td>').join('')}<td class="py-2.5 px-3 num font-bold">100</td><td class="py-2.5 px-3 num font-bold">100</td><td class="py-2.5 px-3">—</td></tr>
+    ${sel.map(c => { const al = weightedAlignment(c), av = simpleAverage(c); return `<tr><th scope="row" class="py-2.5 px-3 text-left font-bold whitespace-nowrap">${esc(c.name)}<div class="text-[10px] font-normal text-pwc-grey">${esc(c.id)}</div></th>${c.dims.map(d => `<td class="py-2.5 px-3 num">${d.score == null ? '<span class="text-amber-800">n/a</span>' : '<strong>' + d.score + '</strong>'}<div class="text-[10px] text-pwc-grey">cov ${d.coverage}%</div></td>`).join('')}<td class="py-2.5 px-3 num">${av == null ? 'n/a' : av}</td><td class="py-2.5 px-3 num font-bold">${al.score == null ? 'n/a' : al.score}</td><td class="py-2.5 px-3 num">${c.overallFitScore}%</td></tr>`; }).join('')}</tbody>`;
+  const opts = sel.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
+  const a = $('benchA'), b = $('benchB'), pa = a.value, pb = b.value;
+  a.innerHTML = opts; b.innerHTML = opts;
+  if (sel.some(c => c.id === pa)) a.value = pa; if (sel.some(c => c.id === pb)) b.value = pb; else if (sel.length > 1) b.selectedIndex = 1;
+  renderBenchAB();
+}
+function renderBenchAB() {
+  const A = candById($('benchA').value), B = candById($('benchB').value), el = $('benchAB');
+  if (!A || !B) { el.innerHTML = '<p class="text-pwc-grey">Select at least two candidates to compare them head-to-head.</p>'; return; }
+  if (A.id === B.id) { el.innerHTML = '<p class="text-pwc-grey">Choose two different candidates.</p>'; return; }
+  el.innerHTML = `<ul class="space-y-1.5">${DIMENSIONS.map((D, k) => { const a = A.dims[k].score, b = B.dims[k].score; if (a == null || b == null) return `<li><strong>${D.label}:</strong> cannot compare (insufficient evidence for ${a == null ? esc(A.name) : esc(B.name)})</li>`; const d = a - b; return `<li><strong>${D.label}:</strong> ${esc(A.name)} ${a} vs ${esc(B.name)} ${b} → ${d === 0 ? 'level' : (d > 0 ? esc(A.name) : esc(B.name)) + ' leads by ' + Math.abs(d)}</li>`; }).join('')}</ul>
+    <p class="mt-2 text-pwc-slate">Overall JD match: ${esc(A.name)} ${A.overallFitScore}% vs ${esc(B.name)} ${B.overallFitScore}%.</p>`;
+}
+
+// ---------- Weights (administrator) + methodology ----------
+function toggleRole() { state.role = state.role === 'admin' ? 'recruiter' : 'admin'; renderWeights(); }
+function renderWeights() {
+  const w = getWeights(), tot = w.reduce((a, b) => a + b, 0), admin = state.role === 'admin';
+  $('weightsPanel').innerHTML = `<div class="flex flex-wrap items-center justify-between gap-2 mb-3"><div><h4 class="font-serif text-lg font-bold">Competency weights</h4><p class="text-xs text-pwc-grey">Used for the weighted alignment score. Weights are normalised to 100%. Ranking uses the screening match score.</p></div>
+    <button onclick="toggleRole()" class="text-xs font-bold px-3 py-1.5 rounded-lg border border-pwc-line hover:border-pwc-orange" aria-pressed="${admin}">${admin ? 'Administrator mode: on' : 'Switch to administrator mode'}</button></div>
+    <div class="grid grid-cols-1 sm:grid-cols-5 gap-3">${DIMENSIONS.map((d, i) => `<div class="rounded-xl border border-pwc-line p-3"><label for="w${i}" class="block text-[11px] font-bold text-pwc-slate mb-1">${d.label}</label>${admin ? `<input id="w${i}" type="number" min="0" max="100" step="1" value="${w[i]}" class="w-full px-2 py-1.5 rounded border border-pwc-line text-sm num">` : `<div class="text-lg font-bold num">${Math.round(w[i] / tot * 100)}%</div>`}</div>`).join('')}</div>
+    ${admin ? '<div class="mt-3 flex gap-2"><button onclick="saveWeights()" class="px-3.5 py-2 rounded-lg bg-pwc-orange hover:bg-pwc-burgundy text-black hover:text-white text-xs font-bold">Save weights</button><button onclick="resetWeights()" class="px-3.5 py-2 rounded-lg border border-pwc-line text-xs font-bold">Reset to equal</button></div>' : ''}
+    <p class="text-[11px] text-pwc-grey mt-2">Administrator mode is a client-side gate for this standalone app. Enforce real permissions with server-side authentication before sharing widely.</p>`;
+}
+function saveWeights() {
+  const w = DIMENSIONS.map((d, i) => Number($('w' + i).value));
+  if (w.some(x => !Number.isFinite(x) || x < 0 || x > 100) || !w.some(x => x > 0)) { showToast('Weights must be numbers between 0 and 100, with at least one above 0.', 'error'); return; }
+  Store.set('weights', w); showToast('Competency weights saved.', 'success'); renderWeights(); updateBenchmark();
+}
+function resetWeights() { Store.del('weights'); renderWeights(); updateBenchmark(); }
+function renderMethodology() {
+  const w = getWeights(), tot = w.reduce((a, b) => a + b, 0);
+  $('methodologyBody').innerHTML = `<p><strong>Scale.</strong> Every dimension is scored 0–100. The target JD benchmark is 100 on all five.</p>` + DIMENSIONS.map((d, i) => `<p><strong>${d.label}</strong> (weight ${Math.round(w[i] / tot * 100)}%): assessed from ${d.basis}.</p>`).join('') +
+    `<p><strong>Evidence coverage</strong> is the share of a dimension's criteria for which the CV gives evidence (0–100%). When a dimension has no usable evidence it is shown as “insufficient evidence”, excluded from averages, and never silently set to zero.</p>
+    <p><strong>Source of scores.</strong> With AI connected, ratings come from the model using only CV evidence; any dimension the model omits is computed locally. Without AI, scores are computed deterministically from CV text: JD-term coverage (domain), overlap with JD responsibilities, leadership and delivery signals, and education/certification level versus the JD (qualification).</p>
+    <p><strong>Weighted alignment</strong> = Σ(score × weight) ÷ Σ(weight of scored dimensions). <strong>Ranking</strong> uses the screening match score (not the weights) and places optimal-fit candidates first.</p>`;
+}
+
+// ---------- Exports ----------
+const LIBS = { jspdf: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js', autotable: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js', xlsx: 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js' };
+async function needLibs(...names) { for (const n of names) { const present = n === 'xlsx' ? typeof XLSX !== 'undefined' : n === 'jspdf' ? !!(window.jspdf && window.jspdf.jsPDF) : !!(window.jspdf && window.jspdf.jsPDF && new window.jspdf.jsPDF().autoTable); if (!present) await loadScriptOnce(LIBS[n]); } }
+const pdfSafe = s => String(s ?? '').replace(/[^\x20-\x7E\u00A0-\u00FF\u2013\u2014\u2018\u2019\u201C\u201D\u2022]/g, '?');
+function benchTableData(sel) {
+  const head = ['Candidate', ...DIMENSIONS.map(d => d.label), 'Average', 'Weighted alignment', 'JD match'];
+  const rows = sel.map(c => { const al = weightedAlignment(c), av = simpleAverage(c); return [`${c.name} (${c.id})`, ...c.dims.map(d => d.score == null ? 'Insufficient evidence' : d.score), av == null ? 'n/a' : av, al.score == null ? 'n/a' : al.score, c.overallFitScore]; });
+  return { head, rows: [['Target JD benchmark', 100, 100, 100, 100, 100, 100, 100, '—'], ...rows] };
+}
+function gapTableData(sel) { const rows = []; sel.forEach(c => c.dims.forEach((d, k) => rows.push([c.name, dimLabel(k), d.score == null ? 'Insufficient evidence' : d.score, d.score == null ? 'n/a' : 100 - d.score, d.coverage + '%', d.evidence.join(' | ')]))); return { head: ['Candidate', 'Dimension', 'Score', 'Gap to benchmark', 'Evidence coverage', 'Evidence'], rows }; }
+function chartPng(chart) { const src = chart.canvas, c = document.createElement('canvas'); c.width = src.width; c.height = src.height; const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(src, 0, 0); return c.toDataURL('image/png'); }
+const stamp = () => new Date().toISOString().slice(0, 10);
+function methodologyText() { const w = getWeights(), tot = w.reduce((a, b) => a + b, 0); return ['Scores are 0-100; the JD benchmark is 100 on every dimension.', ...DIMENSIONS.map((d, i) => `${d.label} (weight ${Math.round(w[i] / tot * 100)}%): ${d.basis}.`), 'Evidence coverage = share of a dimension\'s criteria evidenced in the CV. Dimensions without evidence are shown as insufficient evidence and are not scored as zero.', 'Weighted alignment = sum(score x weight) / sum(weights of scored dimensions).']; }
+
+async function exportBenchmarkPDF() {
+  const sel = benchSel(); if (!sel.length) { showToast('Select at least one candidate first.', 'warning'); return; }
+  try {
+    await needLibs('jspdf', 'autotable');
+    const doc = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+    doc.setFontSize(16); doc.text('TalentLens - Competency Benchmarking', 40, 40);
+    doc.setFontSize(9); doc.text(pdfSafe(`Role: ${state.analysisResult.roleTitle}  |  Generated: ${stamp()}  |  Engine: ${state.analysisResult.engine === 'ai' ? 'AI-evaluated' : 'Local evidence engine'}`), 40, 56);
+    let y = 70;
+    if (state.charts.bench) { doc.addImage(chartPng(state.charts.bench), 'PNG', 40, y, 400, 250); }
+    const t = benchTableData(sel);
+    doc.autoTable({ head: [t.head.map(pdfSafe)], body: t.rows.map(r => r.map(pdfSafe)), startY: y, margin: { left: 455 }, styles: { fontSize: 7 }, headStyles: { fillColor: [45, 45, 45] }, tableWidth: 350 });
+    const g = gapTableData(sel);
+    doc.addPage(); doc.setFontSize(12); doc.text('Competency gap analysis', 40, 40);
+    doc.autoTable({ head: [g.head.map(pdfSafe)], body: g.rows.map(r => r.map(pdfSafe)), startY: 50, styles: { fontSize: 7 }, headStyles: { fillColor: [253, 81, 8] } });
+    let yy = doc.lastAutoTable.finalY + 20; doc.setFontSize(10); doc.text('Methodology', 40, yy); doc.setFontSize(8);
+    methodologyText().forEach(l => { const ls = doc.splitTextToSize(pdfSafe(l), 760); if (yy > 540) { doc.addPage(); yy = 40; } yy += 12; doc.text(ls, 40, yy); yy += (ls.length - 1) * 10; });
+    doc.save(`TalentLens_Competency_Benchmarking_${stamp()}.pdf`); showToast('PDF downloaded.', 'success');
+  } catch (e) { console.error(e); showToast('PDF export failed: ' + e.message, 'error'); }
+}
+async function exportBenchmarkExcel() {
+  const sel = benchSel(); if (!sel.length) { showToast('Select at least one candidate first.', 'warning'); return; }
+  try {
+    await needLibs('xlsx');
+    const wb = XLSX.utils.book_new(), t = benchTableData(sel), g = gapTableData(sel);
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([t.head, ...t.rows]), 'Competency Scores');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([g.head, ...g.rows]), 'Gap Analysis');
+    const fr = sortedFinRows(sel.map(c => c.id), 'rank', 'asc'), ft = finTableData(fr);
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([ft.head, ...ft.body]), 'Financial (PKR)');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Methodology'], ...methodologyText().map(x => [x])]), 'Methodology');
+    XLSX.writeFile(wb, `TalentLens_Competency_Benchmarking_${stamp()}.xlsx`); showToast('Excel file downloaded.', 'success');
+  } catch (e) { console.error(e); showToast('Excel export failed: ' + e.message, 'error'); }
+}
+async function exportFinancialPDF() {
+  try {
+    await needLibs('jspdf', 'autotable');
+    const rows = sortedFinRows(state.fin.selected, $('finSortKey').value, $('finSortDir').value), t = finTableData(rows);
+    const doc = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+    doc.setFontSize(16); doc.text('TalentLens - Financial Comparison (PKR)', 40, 40); doc.setFontSize(9);
+    doc.text(pdfSafe(`Role: ${state.analysisResult.roleTitle}  |  Generated: ${stamp()}`), 40, 56);
+    doc.autoTable({ head: [t.head.map(pdfSafe)], body: t.body.map(r => r.map(pdfSafe)), startY: 70, styles: { fontSize: 7 }, headStyles: { fillColor: [253, 81, 8] } });
+    const y = doc.lastAutoTable.finalY + 18; doc.setFontSize(8);
+    doc.text(doc.splitTextToSize('The revenue multiplier is an assumption-based scenario, not measured productivity. ROI alone is not a hiring recommendation; consider competency fit and mandatory requirements.', 760), 40, y);
+    doc.save(`TalentLens_Financial_Comparison_${stamp()}.pdf`); showToast('PDF downloaded.', 'success');
+  } catch (e) { console.error(e); showToast('PDF export failed: ' + e.message, 'error'); }
+}
+async function exportFinancialExcel() {
+  try {
+    await needLibs('xlsx');
+    const rows = sortedFinRows(state.fin.selected, $('finSortKey').value, $('finSortDir').value);
+    const head = ['Candidate ID', 'Candidate', 'Expected salary (PKR)', 'Salary variance (PKR)', 'Variance %', 'Agency fee (PKR)', 'Total hiring cost (PKR)', 'Projected revenue (PKR)', 'Net benefit (PKR)', 'ROI %', 'JD match %', 'Qualification', 'Mandatory met'];
+    const num = v => v == null ? '' : Math.round(v * 100) / 100;
+    const body = rows.map(x => [x.id, x.name, num(x.salary), num(x.variance), num(x.variancePct), num(x.agencyFee), num(x.totalCost), num(x.revenue), num(x.net), num(x.roi), x.fit, x.status, x.mand.total ? `${x.mand.met}/${x.mand.total}` : 'n/a']);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([head, ...body]), 'Financial Comparison');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Notes'], ['The revenue multiplier is an assumption-based scenario, not measured productivity.'], ['ROI alone is not a hiring recommendation.']]), 'Notes');
+    XLSX.writeFile(wb, `TalentLens_Financial_Comparison_${stamp()}.xlsx`); showToast('Excel file downloaded.', 'success');
+  } catch (e) { console.error(e); showToast('Excel export failed: ' + e.message, 'error'); }
+}
+
+function exportRecruitmentReport() {
+  if (!state.analysisResult) return;
+  const r = state.analysisResult, w = window.open('', '_blank');
+  if (!w) { showToast('Please allow popups to export the report.', 'warning'); return; }
+  const cls = s => s === 'Optimal Fit' ? 'optimal' : s === 'Over-Qualified' ? 'over' : 'under';
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>TalentLens Report - ${esc(r.roleTitle)}</title><style>
+body{font-family:'Helvetica Neue',Arial,sans-serif;color:#2D2D2D;padding:40px;line-height:1.5}.header{border-bottom:3px solid #FD5108;padding-bottom:15px;margin-bottom:30px}.title{font-family:Georgia,serif;font-size:24px;font-weight:bold;margin:0}.subtitle{font-size:13px;color:#6B6B6B;margin-top:5px}
+.section{margin-bottom:25px}.section-title{font-size:15px;font-weight:bold;color:#D04A02;border-bottom:1px solid #E4E1DB;padding-bottom:5px;margin-bottom:12px}.card{background:#FAFAF8;border:1px solid #E4E1DB;border-radius:8px;padding:15px;margin-bottom:12px;page-break-inside:avoid}
+.cand-header{display:flex;justify-content:space-between;font-weight:bold;font-size:15px}.badge{padding:3px 8px;border-radius:4px;font-size:11px;font-weight:bold;text-transform:uppercase}.optimal{background:#ECFDF5;color:#047857}.over{background:#FFFBEB;color:#B45309}.under{background:#FEF2F2;color:#B91C1C}
+ul{margin:5px 0 0 18px;padding:0;font-size:12px}p{font-size:12px;margin:4px 0}table{border-collapse:collapse;width:100%;font-size:11px}th,td{border:1px solid #E4E1DB;padding:5px 7px;text-align:left}th{background:#2D2D2D;color:#fff}.footer{margin-top:40px;padding-top:20px;border-top:1px solid #ccc;font-size:11px;color:#6B6B6B;text-align:center}</style></head><body>
+<div class="header"><div class="title">TalentLens Recruitment Report</div><div class="subtitle">Role: <strong>${esc(r.roleTitle)}</strong> | Generated: ${new Date().toLocaleDateString()} | Engine: ${r.engine === 'ai' ? 'AI-evaluated' : 'Local evidence engine'}</div></div>
+<div class="section"><div class="section-title">Executive overview & recommendation</div><div class="card"><p>${esc(r.executiveSummary)}</p></div></div>
+<div class="section"><div class="section-title">Competency benchmark (JD = 100)</div><table><tr><th>Candidate</th>${DIMENSIONS.map(d => `<th>${d.label}</th>`).join('')}<th>Weighted alignment</th></tr>${r.candidates.map(c => `<tr><td>${esc(c.name)}</td>${c.dims.map(d => `<td>${d.score == null ? 'n/a' : d.score}</td>`).join('')}<td>${weightedAlignment(c).score ?? 'n/a'}</td></tr>`).join('')}</table></div>
+<div class="section"><div class="section-title">Candidate ranking & rationale</div>${r.candidates.map(c => { const fr = finResultFor(c), m = mandatorySummary(c); return `<div class="card"><div class="cand-header"><span>#${c.rank} ${esc(c.name)} (${esc(c.id)}) · ${c.yearsExperience || '?'} yrs</span><div><span class="badge ${cls(c.qualificationStatus)}">${esc(c.qualificationStatus)}</span> <span style="color:#D04A02;margin-left:8px">${c.overallFitScore}% match</span></div></div>
+<p><strong>Why ranked #${c.rank}:</strong></p><ul>${c.ranking.reasons.map(x => `<li>${esc(x)}</li>`).join('')}${c.ranking.compare.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+<p><strong>Mandatory requirements:</strong> ${m.total ? `${m.met}/${m.total} met` : 'n/a'}${fr ? ` · <strong>Scenario ROI:</strong> ${fr.roi == null ? '—' : fmtSigned(fr.roi)} (total hiring cost ${fmtPKR(fr.totalCost)})` : ''}</p></div>`; }).join('')}</div>
+<div class="footer">TalentLens · AI-assisted screening supports, and does not replace, recruiter judgement · Confidential</div></body></html>`;
+  w.document.write(html); w.document.close(); showToast('Executive Talent Report generated.', 'success');
+}
+
+// ---------- Sample inputs (real pipeline, no pre-baked results) ----------
+const SAMPLE_JD = `Role: Principal Enterprise Cloud & AI Architect
+Practice: Technology Consulting & Cloud Transformation
+
+Overview:
+We are seeking a Principal Enterprise Cloud & AI Architect to lead multi-cloud modernization, FinOps governance, and enterprise GenAI platform deployments for large clients.
+
+Core Responsibilities:
+- Architect resilient AWS and Azure landing zones with automated Infrastructure-as-Code (Terraform).
+- Lead C-suite executive workshops to align cloud roadmaps with measurable cost-optimization targets.
+- Govern enterprise AI/ML pipelines and data security compliance (SOC2, ISO 27001).
+- Mentor cross-functional engineering squads of 10-20 consultants and solutions architects.
+
+Required Qualifications:
+- 8 to 12 years of progressive enterprise cloud architecture and consulting experience.
+- Bachelor's degree in Computer Science or a related field.
+- Deep mastery of AWS or Azure, Kubernetes, Terraform and LLM/RAG integration patterns.
+- Proven track record managing large technology transformation engagements.`;
+const SAMPLE_CVS = [
+  ['Ayesha_Khan_CV.pdf', `Ayesha Khan
+Senior Cloud Solutions Architect
+Karachi, Pakistan | ayesha.khan@example.com | +92 300 0000000
+
+PROFESSIONAL SUMMARY
+Cloud architect with 10 years of experience delivering multi-cloud transformations for banks and telecom operators.
+
+EXPERIENCE
+Senior Cloud Solutions Architect | Meridian Digital Solutions Ltd | Mar 2019 – Present
+• Led AWS and Azure landing zone design with Terraform for 6 financial services clients.
+• Presented FinOps business cases to CIOs, saving PKR 480 million annually.
+• Managed a team of 14 engineers and owned delivery of enterprise RAG assistants.
+Cloud Engineer | Indus Telecom Pvt Ltd | Jun 2014 – Feb 2019
+• Implemented Kubernetes clusters and automated CI/CD for 40+ production services.
+• Delivered migration of 120 workloads to Azure within budget.
+
+EDUCATION
+BSc (Hons) Computer Science – FAST National University, 2010 – 2014
+MBA – IBA Karachi, 2017 – 2019
+
+CERTIFICATIONS
+AWS Certified Solutions Architect – Professional
+HashiCorp Certified: Terraform Associate
+
+SKILLS
+AWS, Azure, Kubernetes, Terraform, FinOps, SOC2, ISO 27001, LLM/RAG`],
+  ['Omar_Siddiqui_Resume.docx', `Omar Siddiqui
+VP of Global Infrastructure & Cloud Engineering
+Lahore, Pakistan | omar.siddiqui@example.com
+
+SUMMARY
+Executive technology leader with 19 years of experience running global infrastructure organisations.
+
+WORK HISTORY
+Gulf Digital Holdings Group
+Vice President, Infrastructure & Cloud
+Jan 2015 – Present
+Directed a 120-person global cloud division with a $45M annual budget.
+Advised the board on sovereign cloud strategy and M&A technology due diligence.
+Pinnacle Systems International
+Managing Director, Technology
+2007 – 2014
+Owned the P&L for the regional technology business and led enterprise architecture strategy.
+
+EDUCATION
+Master of Science in Information Systems – University of Karachi
+
+CERTIFICATIONS
+PMP – Project Management Institute
+Member of IEEE`],
+  ['Hira_Malik_CV.pdf', `Hira Malik
+Cloud & Data Platform Lead
+Islamabad, Pakistan | hira.malik@example.com
+
+SUMMARY
+9 years of experience building secure data and AI platforms on Azure.
+
+EXPERIENCE
+Cloud & Data Platform Lead | Zenith Analytics Pvt Ltd | 2018 – Present
+- Engineered ISO 27001 compliant Azure landing zones and Terraform modules.
+- Led technical delivery for 3 enterprise data and LLM modernization programs.
+Data Engineer | Nexa Systems Limited | 2015 – 2018
+- Built production data pipelines serving 2 million users.
+
+EDUCATION
+B.Sc. Software Engineering – NUST, 2011 – 2015
+
+SKILLS
+Azure, Terraform, ISO 27001, LLM pipelines, Python`],
+  ['Bilal_Ahmed_Resume.docx', `Bilal Ahmed
+Mid-Level DevOps Engineer
+Karachi, Pakistan | bilal.ahmed@example.com
+
+SUMMARY
+3.5 years of experience in DevOps support.
+
+EXPERIENCE
+DevOps Engineer | Techwave Solutions | Jan 2022 – Present
+• Maintained CI/CD pipelines, Docker containers and AWS EC2 instances.
+• Assisted senior architects with Terraform scripts and monitoring dashboards.
+
+EDUCATION
+Diploma in Computer Science – Sindh Board of Technical Education`]
+];
+async function loadSampleInputs() {
+  $('jobTitleInput').value = 'Principal Enterprise Cloud & AI Architect';
+  $('jdTextInput').value = SAMPLE_JD; state.jdText = SAMPLE_JD; $('jdCharCount').innerText = `${SAMPLE_JD.length.toLocaleString()} chars`;
+  state.uploadedCVs = SAMPLE_CVS.map(([fileName, rawText]) => { const text = normalizeCVText(rawText); const cv = { fileName, text }; return { id: makeCandId(cv), fileName, text, imageBase64: null, imageMime: 'image/jpeg', ocr: false, sizeLabel: `${(text.length / 1024).toFixed(1)} KB`, preview: quickParse(text, fileName) }; });
+  renderCVQueue();
+  showToast('Loaded sample JD and 4 fictional CVs. Running the real screening pipeline...', 'info');
+  return runRecruitmentAnalysis();
+}
+
+</script>
+</body>
+</html>
