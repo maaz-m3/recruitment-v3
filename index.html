@@ -23,258 +23,610 @@ tailwind.config = { theme: { extend: {
   },
   colors: { pwc: { orange:'#FD5108', burgundy:'#D04A02', tangerine:'#EB8C00', yellow:'#FFB600', rose:'#DB536A',
                    charcoal:'#2D2D2D', slate:'#464646', grey:'#6B6B6B', light:'#F2F0EC', surface:'#FAFAF8', line:'#E4E1DB' } },
+  boxShadow: {
+    'card': '0 1px 3px 0 rgba(45, 45, 45, 0.04), 0 1px 2px -1px rgba(45, 45, 45, 0.03)',
+    'card-hover': '0 10px 25px -5px rgba(45, 45, 45, 0.07), 0 4px 10px -3px rgba(45, 45, 45, 0.04)',
+    'hero': '0 12px 28px -6px rgba(45, 45, 45, 0.22)'
+  },
   animation: { 'fade-in':'fadeIn .35s ease forwards', 'slide-up':'slideUp .4s ease forwards' },
   keyframes: { fadeIn:{'0%':{opacity:'0'},'100%':{opacity:'1'}}, slideUp:{'0%':{opacity:'0',transform:'translateY(12px)'},'100%':{opacity:'1',transform:'translateY(0)'}} }
 } } }
 </script>
 <style>
 :root{--orange:#FD5108;--orange-dark:#D04A02;--ink:#2D2D2D;--line:#E4E1DB;--surface:#FAFAF8}
-::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:#F2F0EC}::-webkit-scrollbar-thumb{background:#C9C5BD;border-radius:3px}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:#F2F0EC}::-webkit-scrollbar-thumb{background:#C9C5BD;border-radius:999px}::-webkit-scrollbar-thumb:hover{background:#A8A297}
 .no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}
-.glass-card{background:#fff;border:1px solid var(--line)}
-.eyebrow{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--orange-dark)}
-.tab-indicator{position:relative}
-.tab-indicator::after{content:'';position:absolute;bottom:-1px;left:0;width:100%;height:3px;background:var(--orange);transform:scaleX(0);transition:transform .25s ease;transform-origin:left}
-.tab-indicator.active::after{transform:scaleX(1)}
-button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,a:focus-visible{outline:3px solid #1b6ef3;outline-offset:2px}
+
+/* Executive Surface & Card Architecture */
+.glass-card{background:#FFFFFF;border:1px solid var(--line);box-shadow:0 1px 3px 0 rgba(45,45,45,0.04),0 1px 2px -1px rgba(45,45,45,0.03);transition:border-color .2s ease,box-shadow .2s ease}
+.glass-card:hover{border-color:#D6D2C9}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--orange-dark)}
+
+/* Sidebar & Mobile Navigation Active States (Preserving existing class hooks) */
+.tab-indicator{position:relative;transition:all .2s ease}
+.tab-indicator.active{background-color:rgba(253,81,8,0.14)!important;color:#FFFFFF!important;box-shadow:inset 3px 0 0 0 #FD5108}
+.tab-indicator.active svg,.tab-indicator.active i{color:#FD5108!important}
+.tab-indicator:not(.active):hover{background-color:rgba(255,255,255,0.06);color:#FFFFFF!important}
+
+/* Form Controls & Sliders */
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,a:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+input[type=text],textarea,select{transition:border-color .15s ease,box-shadow .15s ease}
+input[type=text]:focus,textarea:focus,select:focus{box-shadow:0 0 0 3px rgba(253,81,8,0.12)}
 input[type=range]{-webkit-appearance:none;background:transparent;height:24px}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;height:20px;width:20px;border-radius:50%;background:var(--orange);cursor:pointer;margin-top:-7px;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35)}
-input[type=range]::-webkit-slider-runnable-track{width:100%;height:6px;cursor:pointer;background:#DDD9D1;border-radius:999px}
-input[type=range]::-moz-range-thumb{height:20px;width:20px;border-radius:50%;background:var(--orange);border:2px solid #fff}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;height:18px;width:18px;border-radius:50%;background:var(--orange);cursor:pointer;margin-top:-6px;border:2px solid #fff;box-shadow:0 2px 5px rgba(0,0,0,.3);transition:transform .15s ease}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.12)}
+input[type=range]::-webkit-slider-runnable-track{width:100%;height:6px;cursor:pointer;background:#E4E1DB;border-radius:999px}
+input[type=range]::-moz-range-thumb{height:18px;width:18px;border-radius:50%;background:var(--orange);border:2px solid #fff;box-shadow:0 2px 5px rgba(0,0,0,.3)}
+
 .num{font-variant-numeric:tabular-nums}
 details>summary{list-style:none}details>summary::-webkit-details-marker{display:none}
+details[open] summary .chev-rotate{transform:rotate(180deg)}
+
+/* Clean Table Aesthetics */
+table thead th{letter-spacing:.04em;text-transform:uppercase;font-size:10.5px}
+table tbody tr:nth-child(even){background-color:#FAFAF8}
+table tbody tr:hover{background-color:#F2F0EC}
+
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
-<body class="bg-pwc-surface text-pwc-charcoal font-sans antialiased selection:bg-pwc-orange selection:text-white min-h-screen flex flex-col">
-<a href="#mainContent" class="sr-only focus:not-sr-only focus:absolute focus:z-[70] focus:bg-white focus:p-3">Skip to content</a>
+<body class="bg-pwc-light/65 text-pwc-charcoal font-sans antialiased selection:bg-pwc-orange selection:text-white min-h-screen flex flex-col lg:flex-row">
+<a href="#mainContent" class="sr-only focus:not-sr-only focus:absolute focus:z-[70] focus:bg-white focus:p-3 focus:rounded-lg focus:shadow-lg">Skip to content</a>
+
+<!-- Top Executive Accent Bar -->
 <div class="h-1 w-full bg-pwc-orange fixed top-0 left-0 z-50" aria-hidden="true"></div>
 
-<header class="bg-white border-b border-pwc-line sticky top-1 z-40">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex justify-between items-center h-16">
-      <div class="flex items-center gap-4">
-        <!-- Official logo: supply your authorised file as logo.png next to index.html. Nothing is drawn or approximated here. -->
-        <img src="logo.png" alt="Company logo" class="h-9 w-auto max-w-[150px] object-contain" onerror="this.style.display='none'">
-        <div class="hidden sm:block h-7 w-px bg-pwc-line" aria-hidden="true"></div>
-        <span class="font-serif text-xl font-bold tracking-tight">TalentLens</span>
-      </div>
-      <div class="flex items-center gap-2 sm:gap-3">
-        <div class="hidden md:flex items-center px-3 py-1 rounded-full bg-pwc-light border border-pwc-line text-xs font-medium text-pwc-slate"><span class="w-2 h-2 rounded-full bg-pwc-orange mr-2"></span><span id="activeRoleLabel">Ready for engagement</span></div>
-        <button onclick="exportRecruitmentReport()" id="exportReportBtn" class="hidden text-xs sm:text-sm font-semibold px-3.5 py-2 rounded-lg border border-pwc-charcoal text-pwc-charcoal hover:bg-pwc-charcoal hover:text-white transition-colors items-center gap-1.5"><i data-lucide="file-text" class="w-4 h-4"></i><span>Export Talent Report</span></button>
-        <button onclick="loadSampleInputs()" class="text-xs sm:text-sm font-medium px-3.5 py-2 rounded-lg border border-pwc-line hover:border-pwc-orange hover:text-pwc-burgundy transition-colors flex items-center gap-1.5 bg-white"><i data-lucide="sparkles" class="w-4 h-4 text-pwc-orange"></i><span>Load Sample Inputs</span></button>
-      </div>
-    </div>
-    <nav class="flex space-x-6 overflow-x-auto no-scrollbar" role="tablist" aria-label="Main navigation">
-      <button role="tab" onclick="switchTab('intake')" id="tab-intake" class="tab-indicator active py-3 px-1 text-sm font-bold text-pwc-charcoal whitespace-nowrap flex items-center gap-2" aria-selected="true"><i data-lucide="file-up" class="w-4 h-4"></i><span>1. Engagement Intake</span></button>
-      <button role="tab" onclick="switchTab('assessment')" id="tab-assessment" class="tab-indicator py-3 px-1 text-sm font-medium text-pwc-grey hover:text-pwc-charcoal whitespace-nowrap flex items-center gap-2" aria-selected="false"><i data-lucide="user-check" class="w-4 h-4"></i><span>2. Candidate Assessment</span><span id="candidateCountBadge" class="ml-1 px-2 py-0.5 text-[11px] font-bold rounded-full bg-pwc-light text-pwc-charcoal">0</span></button>
-      <button role="tab" onclick="switchTab('cba')" id="tab-cba" class="tab-indicator py-3 px-1 text-sm font-medium text-pwc-grey hover:text-pwc-charcoal whitespace-nowrap flex items-center gap-2" aria-selected="false"><i data-lucide="calculator" class="w-4 h-4"></i><span>3. Cost-Benefit Analysis</span></button>
-      <button role="tab" onclick="switchTab('reports')" id="tab-reports" class="tab-indicator py-3 px-1 text-sm font-medium text-pwc-grey hover:text-pwc-charcoal whitespace-nowrap flex items-center gap-2" aria-selected="false"><i data-lucide="bar-chart-3" class="w-4 h-4"></i><span>4. Reports & Analytics</span></button>
-    </nav>
-  </div>
-</header>
-
-<div id="toastContainer" class="fixed bottom-5 right-5 z-[60] flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0" role="status" aria-live="polite"></div>
-
-<main id="mainContent" class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
-<!-- ===================== 1. INTAKE ===================== -->
-<section id="view-intake" class="space-y-6">
-  <div class="bg-pwc-charcoal text-white rounded-2xl p-6 sm:p-8 relative overflow-hidden">
-    <div class="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-pwc-orange/30 to-transparent pointer-events-none"></div>
-    <div class="relative z-10 max-w-3xl">
-      <div class="eyebrow !text-orange-300 mb-3">TalentLens screening engine</div>
-      <h1 class="font-serif text-2xl sm:text-3xl font-bold tracking-tight mb-2">Screen candidates, benchmark competencies and model hiring economics</h1>
-      <p class="text-gray-300 text-sm sm:text-base leading-relaxed">Upload the Job Description and candidate CVs (PDF, Word, or scanned image). TalentLens reads each CV, scores it on five evidence-based competency dimensions, explains the ranking, and supports a PKR cost-benefit view for every candidate.</p>
-    </div>
-  </div>
-  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-    <div class="lg:col-span-5 glass-card rounded-2xl p-6 flex flex-col justify-between">
-      <div>
-        <div class="flex items-center justify-between mb-4">
-          <div class="flex items-center gap-2.5"><div class="w-8 h-8 rounded-lg bg-pwc-light text-pwc-burgundy flex items-center justify-center font-bold text-sm">01</div>
-            <div><h2 class="text-base font-bold">Job Description</h2><p class="text-xs text-pwc-grey">Upload a file or paste requirements</p></div></div>
-          <label for="jdFileInput" class="cursor-pointer inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-pwc-light hover:bg-pwc-line transition-colors"><i data-lucide="upload" class="w-3.5 h-3.5"></i><span>Import JD</span></label>
-          <input type="file" id="jdFileInput" accept=".pdf,.docx,.txt" class="hidden" onchange="handleJDUpload(event)">
+<!-- ===================== LEFT EXECUTIVE SIDEBAR (Desktop) & COMPACT BAR (Mobile) ===================== -->
+<aside class="bg-pwc-charcoal text-white w-full lg:w-[264px] lg:fixed lg:inset-y-0 lg:left-0 lg:top-1 z-40 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-white/10 shrink-0">
+  <div>
+    <!-- Brand Lockup -->
+    <div class="px-5 py-4 lg:py-6 flex items-center justify-between lg:justify-start gap-3.5 border-b border-white/10">
+      <div class="flex items-center gap-3">
+        <div class="bg-white/95 px-2 py-1 rounded-md flex items-center justify-center shadow-sm">
+          <!-- Official logo: supply your authorised file as logo.png next to index.html. Nothing is drawn or approximated here. -->
+          <img src="logo.png" alt="Company logo" class="h-7 w-auto max-w-[110px] object-contain" onerror="this.parentElement.style.display='none'">
         </div>
-        <div id="jdFileBadge" class="hidden mb-3 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-between text-xs text-emerald-800">
-          <div class="flex items-center gap-2 truncate"><i data-lucide="file-check" class="w-4 h-4 shrink-0"></i><span id="jdFileName" class="font-medium truncate">jd.pdf</span></div>
-          <button onclick="clearJD()" class="font-semibold ml-2">Clear</button></div>
-        <div class="space-y-3">
-          <div><label for="jobTitleInput" class="block text-xs font-semibold text-pwc-slate uppercase tracking-wider mb-1">Role title</label>
-            <input type="text" id="jobTitleInput" placeholder="e.g., Senior Cloud Solutions Architect" class="w-full px-3.5 py-2.5 rounded-lg border border-pwc-line text-sm focus:border-pwc-orange"></div>
-          <div><label for="jdTextInput" class="block text-xs font-semibold text-pwc-slate uppercase tracking-wider mb-1">Responsibilities & requirements</label>
-            <textarea id="jdTextInput" rows="10" placeholder="Paste the full Job Description here or import a file above..." class="w-full px-3.5 py-2.5 rounded-lg border border-pwc-line text-sm focus:border-pwc-orange leading-relaxed"></textarea></div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-serif text-xl font-bold tracking-tight text-white">TalentLens</span>
+          </div>
+          <span class="hidden lg:block text-[10px] uppercase tracking-widest text-gray-400 font-semibold mt-0.5">Executive Talent Analytics</span>
         </div>
       </div>
-      <div class="mt-4 pt-4 border-t border-pwc-line flex items-center justify-between text-xs text-pwc-grey"><span>Client-side text extraction & OCR</span><span id="jdCharCount">0 chars</span></div>
-    </div>
-    <div class="lg:col-span-7 glass-card rounded-2xl p-6 flex flex-col justify-between">
-      <div>
-        <div class="flex items-center justify-between mb-4">
-          <div class="flex items-center gap-2.5"><div class="w-8 h-8 rounded-lg bg-pwc-light text-pwc-burgundy flex items-center justify-center font-bold text-sm">02</div>
-            <div><h2 class="text-base font-bold">Candidate CVs</h2><p class="text-xs text-pwc-grey">PDF, Word or scanned image resumes</p></div></div>
-          <button onclick="clearAllCVs()" id="clearCVsBtn" class="hidden text-xs font-medium text-pwc-burgundy hover:underline">Remove all</button>
-        </div>
-        <div id="cvDropZone" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();document.getElementById('cvFileInput').click()}" onclick="document.getElementById('cvFileInput').click()" class="border-2 border-dashed border-pwc-line hover:border-pwc-orange rounded-2xl p-8 text-center cursor-pointer transition-all bg-pwc-surface group">
-          <input type="file" id="cvFileInput" multiple accept=".pdf,.docx,.txt,.png,.jpg,.jpeg,.webp" class="hidden" onchange="handleCVFiles(event.target.files)">
-          <div class="w-12 h-12 rounded-xl bg-white border border-pwc-line flex items-center justify-center mx-auto mb-3"><i data-lucide="folder-up" class="w-6 h-6 text-pwc-orange"></i></div>
-          <p class="text-sm font-semibold">Click to upload CVs or drag & drop</p>
-          <p class="text-xs text-pwc-grey mt-1">.PDF, .DOCX and images (scanned CVs are read with OCR). Duplicate files are ignored.</p>
-        </div>
-        <div class="mt-5">
-          <div class="flex items-center justify-between mb-2"><span class="text-xs font-semibold text-pwc-slate uppercase tracking-wider">Parsed candidate queue</span><span id="queuedCountText" class="text-xs font-medium text-pwc-grey">0 files ready</span></div>
-          <div id="cvQueueList" class="space-y-2.5 max-h-72 overflow-y-auto pr-1"></div>
-        </div>
-      </div>
-      <div class="mt-6 pt-5 border-t border-pwc-line flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div class="flex flex-wrap items-center gap-2 text-xs text-pwc-slate"><i data-lucide="shield-check" class="w-4 h-4 text-pwc-orange shrink-0"></i><span>Evidence-based scoring powered by Gemini AI</span><span id="aiStatusChip" class="px-2 py-0.5 rounded-full border text-[11px] font-semibold bg-gray-100 text-pwc-grey border-gray-200">Checking AI…</span></div>
-        <button id="analyzeBtn" onclick="runRecruitmentAnalysis()" class="w-full sm:w-auto px-6 py-3 rounded-lg bg-pwc-orange hover:bg-pwc-burgundy text-black hover:text-white font-bold text-sm transition-colors flex items-center justify-center gap-2"><i data-lucide="play" class="w-4 h-4"></i><span>Run screening & benchmark</span></button>
+      <!-- Mobile Quick Action -->
+      <div class="flex lg:hidden items-center gap-2">
+        <button onclick="loadSampleInputs()" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors flex items-center gap-1.5">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-pwc-orange"></i><span>Sample</span>
+        </button>
       </div>
     </div>
-  </div>
-</section>
 
-<div id="analysisLoader" class="hidden fixed inset-0 bg-pwc-charcoal/70 z-50 items-center justify-center p-4" role="alertdialog" aria-live="assertive" aria-label="TalentLens is evaluating candidates">
-  <div class="bg-white rounded-2xl max-w-md w-full p-7 shadow-2xl text-center animate-slide-up">
-    <div class="w-14 h-14 rounded-xl bg-pwc-light flex items-center justify-center mx-auto mb-4"><div class="w-7 h-7 border-[3px] border-pwc-orange border-t-transparent rounded-full animate-spin"></div></div>
-    <h3 class="font-serif text-xl font-bold mb-1">TalentLens is evaluating the candidate pool</h3>
-    <p id="loaderStatusText" class="text-sm text-pwc-grey mb-4">Mapping candidate evidence to JD competencies...</p>
-    <div class="w-full bg-pwc-light rounded-full h-2 overflow-hidden"><div id="loaderProgressBar" class="bg-pwc-orange h-2 rounded-full transition-all duration-500" style="width:35%"></div></div>
-  </div>
-</div>
-
-<!-- ===================== 2. CANDIDATE ASSESSMENT ===================== -->
-<section id="view-assessment" class="hidden space-y-5">
-  <div class="glass-card rounded-2xl p-5 flex flex-wrap items-end gap-4">
-    <div><label for="assessCandSelect" class="block text-[11px] font-bold uppercase text-pwc-grey mb-1">Candidate</label>
-      <select id="assessCandSelect" onchange="openAssessment(this.value)" class="px-3 py-2 rounded-lg border border-pwc-line text-sm font-semibold bg-white min-w-[220px]"></select></div>
-    <div class="flex gap-2"><button onclick="stepAssessment(-1)" class="px-3 py-2 rounded-lg border border-pwc-line text-xs font-semibold hover:border-pwc-orange" aria-label="Previous candidate">‹ Prev</button><button onclick="stepAssessment(1)" class="px-3 py-2 rounded-lg border border-pwc-line text-xs font-semibold hover:border-pwc-orange" aria-label="Next candidate">Next ›</button></div>
-    <div id="assessHeader" class="flex-1 min-w-[200px]"></div>
-  </div>
-  <div id="assessTabs" role="tablist" aria-label="Candidate assessment sections" class="flex flex-wrap gap-2"></div>
-  <div id="assessBody"></div>
-</section>
-
-<!-- ===================== 3. COST-BENEFIT ===================== -->
-<section id="view-cba" class="hidden space-y-5">
-  <div class="glass-card rounded-2xl p-5 flex flex-wrap items-end gap-4">
-    <div class="min-w-[220px]"><span class="eyebrow">Cost-Benefit Analysis</span>
-      <h2 class="font-serif text-xl font-bold">Candidate hiring economics (PKR)</h2></div>
-    <div><label for="cbaCandSelect" class="block text-[11px] font-bold uppercase text-pwc-grey mb-1">Candidate</label>
-      <select id="cbaCandSelect" onchange="openCBA(this.value)" class="px-3 py-2 rounded-lg border border-pwc-line text-sm font-semibold bg-white min-w-[220px]"></select></div>
-    <button onclick="goReports('fincmp')" class="px-3 py-2 rounded-lg border border-pwc-charcoal text-xs font-semibold hover:bg-pwc-charcoal hover:text-white">Compare candidates →</button>
-  </div>
-  <div id="cbaRoot"></div>
-</section>
-
-<!-- ===================== 4. REPORTS & ANALYTICS ===================== -->
-<section id="view-reports" class="hidden space-y-5">
-  <div id="reportTabs" role="tablist" aria-label="Reports and analytics sections" class="flex flex-wrap gap-2"></div>
-
-  <div id="rp-overview" class="space-y-6">
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div class="glass-card rounded-2xl p-5 border-l-4 border-l-pwc-orange"><div class="text-xs font-semibold text-pwc-grey uppercase tracking-wider mb-1">Top ranked</div><div id="kpiTopCandidate" class="text-xl font-bold truncate mt-1">—</div><div class="mt-2"><span id="kpiTopScore" class="px-2 py-0.5 rounded bg-pwc-light text-pwc-burgundy text-xs font-bold">0% match</span></div></div>
-      <div class="glass-card rounded-2xl p-5 border-l-4 border-l-pwc-charcoal"><div class="text-xs font-semibold text-pwc-grey uppercase tracking-wider mb-1">Optimal qualification</div><div id="kpiOptimalCount" class="text-2xl font-bold mt-1 num">0 / 0</div><p class="text-xs text-pwc-grey mt-2">Calibrated to role level</p></div>
-      <div class="glass-card rounded-2xl p-5 border-l-4 border-l-pwc-yellow"><div class="text-xs font-semibold text-pwc-grey uppercase tracking-wider mb-1">Over-qualified</div><div id="kpiOverCount" class="text-2xl font-bold mt-1 num">0</div><p class="text-xs text-pwc-grey mt-2">Salary premium / retention risk</p></div>
-      <div class="glass-card rounded-2xl p-5 border-l-4 border-l-pwc-rose"><div class="text-xs font-semibold text-pwc-grey uppercase tracking-wider mb-1">Under-qualified</div><div id="kpiUnderCount" class="text-2xl font-bold mt-1 num">0</div><p class="text-xs text-pwc-grey mt-2">Needs upskilling investment</p></div>
+    <!-- Navigation Menu -->
+    <div class="px-3 py-2 lg:py-5">
+      <div class="hidden lg:block px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">Workflow Modules</div>
+      <nav class="flex lg:flex-col space-x-1.5 lg:space-x-0 lg:space-y-1.5 overflow-x-auto no-scrollbar" role="tablist" aria-label="Main navigation">
+        <button role="tab" onclick="switchTab('intake')" id="tab-intake" class="tab-indicator active px-3.5 py-2.5 lg:py-3 rounded-xl text-xs lg:text-[13px] font-bold text-white whitespace-nowrap flex items-center gap-3 text-left" aria-selected="true">
+          <i data-lucide="file-up" class="w-4 h-4 shrink-0 text-pwc-orange"></i>
+          <span class="flex-1">1. Engagement Intake</span>
+        </button>
+        <button role="tab" onclick="switchTab('assessment')" id="tab-assessment" class="tab-indicator px-3.5 py-2.5 lg:py-3 rounded-xl text-xs lg:text-[13px] font-medium text-gray-300 whitespace-nowrap flex items-center gap-3 text-left" aria-selected="false">
+          <i data-lucide="user-check" class="w-4 h-4 shrink-0 text-gray-400"></i>
+          <span class="flex-1">2. Candidate Assessment</span>
+          <span id="candidateCountBadge" class="px-2 py-0.5 text-[11px] font-bold rounded-full bg-white/15 text-white num">0</span>
+        </button>
+        <button role="tab" onclick="switchTab('cba')" id="tab-cba" class="tab-indicator px-3.5 py-2.5 lg:py-3 rounded-xl text-xs lg:text-[13px] font-medium text-gray-300 whitespace-nowrap flex items-center gap-3 text-left" aria-selected="false">
+          <i data-lucide="calculator" class="w-4 h-4 shrink-0 text-gray-400"></i>
+          <span class="flex-1">3. Cost-Benefit Analysis</span>
+        </button>
+        <button role="tab" onclick="switchTab('reports')" id="tab-reports" class="tab-indicator px-3.5 py-2.5 lg:py-3 rounded-xl text-xs lg:text-[13px] font-medium text-gray-300 whitespace-nowrap flex items-center gap-3 text-left" aria-selected="false">
+          <i data-lucide="bar-chart-3" class="w-4 h-4 shrink-0 text-gray-400"></i>
+          <span class="flex-1">4. Reports & Analytics</span>
+        </button>
+      </nav>
     </div>
+  </div>
+
+  <!-- Sidebar Bottom Governance Card (Desktop) -->
+  <div class="hidden lg:block p-4 m-3 rounded-2xl bg-white/[0.05] border border-white/10 space-y-3">
+    <div class="flex items-center gap-2">
+      <span class="w-6 h-6 rounded-lg bg-pwc-orange/20 text-pwc-orange flex items-center justify-center">
+        <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+      </span>
+      <span class="text-xs font-bold text-white tracking-tight">Evidence Governance</span>
+    </div>
+    <p class="text-[11px] text-gray-400 leading-relaxed">5-dimension competency calibration & PKR hiring economics for partner-level review.</p>
+    <button onclick="loadSampleInputs()" class="w-full py-2 px-3 rounded-xl bg-pwc-orange hover:bg-pwc-burgundy text-pwc-charcoal hover:text-white font-bold text-xs transition-all flex items-center justify-center gap-1.5 shadow-sm">
+      <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+      <span>Load Sample Inputs</span>
+    </button>
+  </div>
+</aside>
+
+<!-- ===================== MAIN WORKSPACE SHELL ===================== -->
+<div class="flex-1 lg:pl-[264px] flex flex-col min-h-screen pt-1">
+
+  <!-- Clean Executive Top Bar -->
+  <header class="bg-white/95 backdrop-blur-sm border-b border-pwc-line sticky top-1 z-30">
+    <div class="max-w-[1380px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-pwc-surface border border-pwc-line text-xs font-medium text-pwc-slate max-w-full">
+          <span class="w-2 h-2 rounded-full bg-pwc-orange shrink-0 animate-pulse"></span>
+          <span class="text-pwc-grey hidden sm:inline">Engagement:</span>
+          <span id="activeRoleLabel" class="font-bold text-pwc-charcoal truncate">Ready for engagement</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2.5 shrink-0">
+        <button onclick="exportRecruitmentReport()" id="exportReportBtn" class="hidden text-xs font-bold px-3.5 py-2 rounded-xl bg-pwc-charcoal hover:bg-pwc-slate text-white transition-all items-center gap-2 shadow-sm">
+          <i data-lucide="file-text" class="w-3.5 h-3.5 text-pwc-orange"></i>
+          <span>Export Talent Report</span>
+        </button>
+        <button onclick="loadSampleInputs()" class="hidden lg:inline-flex text-xs font-semibold px-3.5 py-2 rounded-xl border border-pwc-line hover:border-pwc-orange text-pwc-charcoal hover:text-pwc-burgundy transition-all items-center gap-1.5 bg-white">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-pwc-orange"></i>
+          <span>Load Sample Inputs</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-[60] flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0" role="status" aria-live="polite"></div>
+
+  <main id="mainContent" class="flex-grow max-w-[1380px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+
+  <!-- ===================== 1. ENGAGEMENT INTAKE ===================== -->
+  <section id="view-intake" class="space-y-6 animate-fade-in">
+    <!-- Executive Banner -->
+    <div class="bg-pwc-charcoal text-white rounded-2xl p-6 sm:p-8 relative overflow-hidden shadow-hero border border-white/10">
+      <div class="absolute right-0 top-0 h-full w-2/5 bg-gradient-to-l from-pwc-orange/25 via-pwc-burgundy/10 to-transparent pointer-events-none"></div>
+      <div class="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div class="max-w-3xl">
+          <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-white/10 border border-white/10 mb-3">
+            <span class="w-1.5 h-1.5 rounded-full bg-pwc-orange"></span>
+            <span class="text-[10px] font-bold uppercase tracking-widest text-orange-300">TalentLens Screening Engine</span>
+          </div>
+          <h1 class="font-serif text-2xl sm:text-3xl font-bold tracking-tight mb-2.5 text-white">Screen candidates, benchmark competencies & model hiring economics</h1>
+          <p class="text-gray-300 text-xs sm:text-sm leading-relaxed max-w-2xl">Upload the Job Description and candidate CVs (PDF, Word, or scanned image). TalentLens reads each CV, scores it across five evidence-based competency dimensions, explains the ranking, and models PKR cost-benefit scenarios.</p>
+        </div>
+        <div class="hidden xl:flex flex-col gap-2 shrink-0 bg-white/[0.06] border border-white/10 rounded-xl p-4 text-xs min-w-[230px]">
+          <div class="flex items-center justify-between text-gray-300"><span>Supported formats</span><span class="font-bold text-white">PDF, DOCX, OCR</span></div>
+          <div class="h-px bg-white/10"></div>
+          <div class="flex items-center justify-between text-gray-300"><span>Benchmark scale</span><span class="font-bold text-pwc-orange">5 Dimensions</span></div>
+          <div class="h-px bg-white/10"></div>
+          <div class="flex items-center justify-between text-gray-300"><span>Financial currency</span><span class="font-bold text-white">PKR (Annual)</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Two-Column Intake Workspace -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      <div class="lg:col-span-7 glass-card rounded-2xl p-6">
-        <h3 class="text-base font-bold">JD match score by candidate</h3><p class="text-xs text-pwc-grey mb-3">Bars coloured by qualification tier</p>
-        <div class="relative h-64 w-full"><canvas id="overviewBarChart" role="img" aria-label="Bar chart of JD match score per candidate"></canvas></div>
-      </div>
+      <!-- Step 01: Job Description -->
       <div class="lg:col-span-5 glass-card rounded-2xl p-6 flex flex-col justify-between">
-        <div><h3 class="text-base font-bold mb-1">Talent pool calibration</h3><p class="text-xs text-pwc-grey mb-3">Distribution by qualification tier</p>
-          <div class="relative h-44 w-full"><canvas id="tierDoughnutChart" role="img" aria-label="Doughnut chart of qualification tiers"></canvas></div></div>
-        <div class="mt-4 p-3.5 rounded-xl bg-pwc-light border border-pwc-line text-xs leading-relaxed"><strong class="text-pwc-burgundy block mb-1">Recommendation & rationale</strong><span id="executiveSummaryText">Run a screening to see the synthesised summary.</span></div>
-      </div>
-    </div>
-  </div>
+        <div>
+          <div class="flex items-center justify-between pb-4 mb-5 border-b border-pwc-line">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-pwc-charcoal text-white flex items-center justify-center font-bold text-xs shadow-sm">01</div>
+              <div>
+                <h2 class="text-base font-bold text-pwc-charcoal">Job Description</h2>
+                <p class="text-xs text-pwc-grey">Import a document or paste role criteria</p>
+              </div>
+            </div>
+            <label for="jdFileInput" class="cursor-pointer inline-flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-xl bg-pwc-surface border border-pwc-line hover:border-pwc-orange hover:text-pwc-burgundy transition-all">
+              <i data-lucide="upload" class="w-3.5 h-3.5 text-pwc-orange"></i>
+              <span>Import JD</span>
+            </label>
+            <input type="file" id="jdFileInput" accept=".pdf,.docx,.txt" class="hidden" onchange="handleJDUpload(event)">
+          </div>
 
-  <div id="rp-ranking" class="hidden space-y-6">
-    <div class="glass-card rounded-2xl p-6">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-        <div><h3 class="font-serif text-lg font-bold">Final candidate ranking</h3><p class="text-xs text-pwc-grey">Optimal-fit candidates first, then by JD match score. Expand a row to see exactly why.</p></div>
-        <span id="engineBadge" class="self-start px-2.5 py-1 rounded-full border text-[11px] font-semibold bg-gray-100 text-pwc-slate border-gray-200"></span>
-      </div>
-      <ol id="rankingList"></ol>
-    </div>
-    <div>
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-        <div><h3 class="font-serif text-lg font-bold">Ranked candidate shortlist</h3><p class="text-xs text-pwc-grey">Open a candidate's full assessment or benchmark them against peers</p></div>
-        <div class="flex flex-wrap gap-1.5" id="qualificationFilters">
-          <button onclick="filterCandidates('ALL')" class="filter-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-pwc-charcoal text-white">All</button>
-          <button onclick="filterCandidates('Optimal Fit')" class="filter-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-pwc-line text-pwc-slate hover:border-pwc-orange">Optimal Fit</button>
-          <button onclick="filterCandidates('Over-Qualified')" class="filter-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-pwc-line text-pwc-slate hover:border-pwc-orange">Over-Qualified</button>
-          <button onclick="filterCandidates('Under-Qualified')" class="filter-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-pwc-line text-pwc-slate hover:border-pwc-orange">Under-Qualified</button>
+          <div id="jdFileBadge" class="hidden mb-4 px-3.5 py-2.5 rounded-xl bg-emerald-50/90 border border-emerald-200 flex items-center justify-between text-xs text-emerald-900">
+            <div class="flex items-center gap-2 truncate">
+              <i data-lucide="file-check" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+              <span id="jdFileName" class="font-semibold truncate">jd.pdf</span>
+            </div>
+            <button onclick="clearJD()" class="font-bold text-emerald-800 hover:text-rose-700 ml-2 transition-colors">Clear</button>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <label for="jobTitleInput" class="block text-[11px] font-bold text-pwc-slate uppercase tracking-wider mb-1.5">Target Role Title</label>
+              <input type="text" id="jobTitleInput" placeholder="e.g., Senior Cloud Solutions Architect" class="w-full px-3.5 py-2.5 rounded-xl border border-pwc-line bg-pwc-surface/50 focus:bg-white text-sm font-medium focus:border-pwc-orange">
+            </div>
+            <div>
+              <label for="jdTextInput" class="block text-[11px] font-bold text-pwc-slate uppercase tracking-wider mb-1.5">Responsibilities & Qualifications</label>
+              <textarea id="jdTextInput" rows="11" placeholder="Paste the full Job Description here or import a file above..." class="w-full px-3.5 py-3 rounded-xl border border-pwc-line bg-pwc-surface/50 focus:bg-white text-sm focus:border-pwc-orange leading-relaxed"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-5 pt-4 border-t border-pwc-line flex items-center justify-between text-xs text-pwc-grey">
+          <span class="flex items-center gap-1.5"><i data-lucide="cpu" class="w-3.5 h-3.5 text-pwc-slate"></i>Client-side text extraction & OCR</span>
+          <span id="jdCharCount" class="font-semibold text-pwc-slate num">0 chars</span>
         </div>
       </div>
-      <div id="candidateCardsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-5"></div>
+
+      <!-- Step 02: Candidate CVs -->
+      <div class="lg:col-span-7 glass-card rounded-2xl p-6 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between pb-4 mb-5 border-b border-pwc-line">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-xl bg-pwc-orange text-white flex items-center justify-center font-bold text-xs shadow-sm">02</div>
+              <div>
+                <h2 class="text-base font-bold text-pwc-charcoal">Candidate CVs</h2>
+                <p class="text-xs text-pwc-grey">Batch upload PDF, Word or scanned image resumes</p>
+              </div>
+            </div>
+            <button onclick="clearAllCVs()" id="clearCVsBtn" class="hidden text-xs font-bold px-3 py-1.5 rounded-lg text-pwc-burgundy hover:bg-rose-50 transition-colors">Remove all</button>
+          </div>
+
+          <div id="cvDropZone" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();document.getElementById('cvFileInput').click()}" onclick="document.getElementById('cvFileInput').click()" class="border-2 border-dashed border-pwc-line hover:border-pwc-orange rounded-2xl p-8 text-center cursor-pointer transition-all bg-pwc-surface hover:bg-orange-50/20 group">
+            <input type="file" id="cvFileInput" multiple accept=".pdf,.docx,.txt,.png,.jpg,.jpeg,.webp" class="hidden" onchange="handleCVFiles(event.target.files)">
+            <div class="w-13 h-13 w-12 h-12 rounded-2xl bg-white border border-pwc-line group-hover:border-pwc-orange/50 group-hover:shadow-sm flex items-center justify-center mx-auto mb-3.5 transition-all">
+              <i data-lucide="folder-up" class="w-6 h-6 text-pwc-orange"></i>
+            </div>
+            <p class="text-sm font-bold text-pwc-charcoal">Click to upload CVs or drag & drop files here</p>
+            <p class="text-xs text-pwc-grey mt-1.5 max-w-md mx-auto">Supports .PDF, .DOCX and images (scanned CVs are processed via OCR). Duplicate files are automatically filtered.</p>
+          </div>
+
+          <div class="mt-6">
+            <div class="flex items-center justify-between mb-2.5">
+              <span class="text-[11px] font-bold text-pwc-slate uppercase tracking-wider">Parsed Candidate Queue</span>
+              <span id="queuedCountText" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-pwc-light text-pwc-charcoal num">0 files ready</span>
+            </div>
+            <div id="cvQueueList" class="space-y-2.5 max-h-72 overflow-y-auto pr-1"></div>
+          </div>
+        </div>
+
+        <div class="mt-6 pt-5 border-t border-pwc-line flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex flex-wrap items-center gap-2 text-xs text-pwc-slate">
+            <i data-lucide="shield-check" class="w-4 h-4 text-pwc-orange shrink-0"></i>
+            <span class="font-medium">Evidence-based scoring</span>
+            <span id="aiStatusChip" class="px-2.5 py-0.5 rounded-full border text-[11px] font-bold bg-gray-100 text-pwc-grey border-gray-200">Checking AI…</span>
+          </div>
+          <button id="analyzeBtn" onclick="runRecruitmentAnalysis()" class="w-full sm:w-auto px-6 py-3 rounded-xl bg-pwc-orange hover:bg-pwc-burgundy text-pwc-charcoal hover:text-white font-bold text-sm transition-all flex items-center justify-center gap-2.5 shadow-sm hover:shadow">
+            <i data-lucide="play" class="w-4 h-4 fill-current"></i>
+            <span>Run screening & benchmark</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Professional Loading Overlay -->
+  <div id="analysisLoader" class="hidden fixed inset-0 bg-pwc-charcoal/75 backdrop-blur-xs z-50 items-center justify-center p-4" role="alertdialog" aria-live="assertive" aria-label="TalentLens is evaluating candidates">
+    <div class="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl border border-pwc-line text-center animate-slide-up">
+      <div class="w-16 h-16 rounded-2xl bg-pwc-surface border border-pwc-line flex items-center justify-center mx-auto mb-5 shadow-sm">
+        <div class="w-8 h-8 border-[3px] border-pwc-orange border-t-transparent rounded-full animate-spin"></div>
+      </div>
+      <div class="eyebrow mb-1.5">Screening Engine Active</div>
+      <h3 class="font-serif text-xl font-bold text-pwc-charcoal mb-2">Evaluating Candidate Pool</h3>
+      <p id="loaderStatusText" class="text-xs sm:text-sm text-pwc-grey mb-5">Mapping candidate evidence to JD competencies...</p>
+      <div class="w-full bg-pwc-light rounded-full h-2.5 overflow-hidden p-0.5">
+        <div id="loaderProgressBar" class="bg-pwc-orange h-1.5 rounded-full transition-all duration-500" style="width:35%"></div>
+      </div>
     </div>
   </div>
 
-  <div id="rp-benchmark" class="hidden space-y-6">
-    <div class="glass-card rounded-2xl p-6">
-      <div class="flex flex-col md:flex-row md:items-start justify-between gap-3 mb-4">
-        <div><span class="eyebrow">Reports & Analytics</span><h3 class="font-serif text-xl font-bold">Competency Benchmarking</h3>
-          <p class="text-xs text-pwc-grey max-w-2xl">Target JD benchmark (100 on every dimension) versus selected candidates, using evidence-based scores from the screening engine.</p></div>
-        <div class="flex gap-2"><button onclick="exportBenchmarkPDF()" class="px-3.5 py-2 rounded-lg bg-pwc-orange hover:bg-pwc-burgundy text-black hover:text-white text-xs font-bold">Download PDF</button>
-          <button onclick="exportBenchmarkExcel()" class="px-3.5 py-2 rounded-lg border border-pwc-charcoal text-xs font-bold hover:bg-pwc-charcoal hover:text-white">Download Excel</button></div>
+  <!-- ===================== 2. CANDIDATE ASSESSMENT ===================== -->
+  <section id="view-assessment" class="hidden space-y-6 animate-fade-in">
+    <div class="glass-card rounded-2xl p-5 sm:p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div class="flex flex-wrap items-end gap-3">
+        <div>
+          <label for="assessCandSelect" class="block text-[10px] font-bold uppercase tracking-wider text-pwc-grey mb-1">Active Candidate Profile</label>
+          <select id="assessCandSelect" onchange="openAssessment(this.value)" class="px-3.5 py-2.5 rounded-xl border border-pwc-line text-sm font-bold bg-pwc-surface focus:bg-white min-w-[240px]"></select>
+        </div>
+        <div class="flex gap-1.5">
+          <button onclick="stepAssessment(-1)" class="px-3.5 py-2.5 rounded-xl border border-pwc-line bg-white text-xs font-bold hover:border-pwc-orange hover:text-pwc-burgundy transition-colors" aria-label="Previous candidate">‹ Prev</button>
+          <button onclick="stepAssessment(1)" class="px-3.5 py-2.5 rounded-xl border border-pwc-line bg-white text-xs font-bold hover:border-pwc-orange hover:text-pwc-burgundy transition-colors" aria-label="Next candidate">Next ›</button>
+        </div>
       </div>
+      <div id="assessHeader" class="flex-1 lg:text-right min-w-[220px]"></div>
+    </div>
+    <div id="assessTabs" role="tablist" aria-label="Candidate assessment sections" class="flex flex-wrap gap-2"></div>
+    <div id="assessBody"></div>
+  </section>
+
+  <!-- ===================== 3. COST-BENEFIT ANALYSIS ===================== -->
+  <section id="view-cba" class="hidden space-y-6 animate-fade-in">
+    <div class="glass-card rounded-2xl p-5 sm:p-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div>
+        <span class="eyebrow">Financial Modeling</span>
+        <h2 class="font-serif text-2xl font-bold text-pwc-charcoal mt-0.5">Candidate Hiring Economics (PKR)</h2>
+      </div>
+      <div class="flex flex-wrap items-end gap-3">
+        <div>
+          <label for="cbaCandSelect" class="block text-[10px] font-bold uppercase tracking-wider text-pwc-grey mb-1">Select Candidate</label>
+          <select id="cbaCandSelect" onchange="openCBA(this.value)" class="px-3.5 py-2.5 rounded-xl border border-pwc-line text-sm font-bold bg-pwc-surface focus:bg-white min-w-[230px]"></select>
+        </div>
+        <button onclick="goReports('fincmp')" class="px-4 py-2.5 rounded-xl bg-pwc-charcoal text-white text-xs font-bold hover:bg-pwc-burgundy transition-colors">Compare all candidates →</button>
+      </div>
+    </div>
+    <div id="cbaRoot"></div>
+  </section>
+
+  <!-- ===================== 4. REPORTS & ANALYTICS DASHBOARD ===================== -->
+  <section id="view-reports" class="hidden space-y-6 animate-fade-in">
+    <!-- Dashboard Title & Sub-Navigation Strip -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-pwc-line">
+      <div>
+        <span class="eyebrow">Executive Boardroom View</span>
+        <h1 class="font-serif text-2xl sm:text-3xl font-bold tracking-tight text-pwc-charcoal">Reports & Talent Analytics</h1>
+      </div>
+      <div id="reportTabs" role="tablist" aria-label="Reports and analytics sections" class="flex flex-wrap gap-2"></div>
+    </div>
+
+    <!-- A. SCREENING OVERVIEW -->
+    <div id="rp-overview" class="space-y-6">
+      <!-- Quantro-Inspired 4-Card KPI Strip (Dark Hero First Card + Clean White Metric Cards) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
+        <!-- Hero Dark KPI Card -->
+        <div class="bg-pwc-charcoal text-white rounded-2xl p-6 shadow-hero flex flex-col justify-between relative overflow-hidden">
+          <div class="absolute -right-6 -bottom-6 w-28 h-28 rounded-full bg-pwc-orange/15 pointer-events-none"></div>
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-bold uppercase tracking-wider text-gray-300">Top Ranked Candidate</span>
+            <span class="w-8 h-8 rounded-xl bg-pwc-orange/20 text-pwc-orange flex items-center justify-center">
+              <i data-lucide="award" class="w-4 h-4"></i>
+            </span>
+          </div>
+          <div id="kpiTopCandidate" class="text-xl sm:text-2xl font-bold truncate text-white tracking-tight">—</div>
+          <div class="mt-3 flex items-center justify-between">
+            <span id="kpiTopScore" class="px-2.5 py-1 rounded-lg bg-pwc-orange text-pwc-charcoal text-xs font-bold num">0% match</span>
+            <span class="text-[11px] text-gray-400">Rank #1</span>
+          </div>
+        </div>
+
+        <!-- Optimal Qualification Card -->
+        <div class="glass-card rounded-2xl p-6 flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-bold uppercase tracking-wider text-pwc-grey">Optimal Qualification</span>
+            <span class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
+              <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+            </span>
+          </div>
+          <div id="kpiOptimalCount" class="text-3xl font-bold text-pwc-charcoal num">0 / 0</div>
+          <p class="text-xs text-pwc-grey mt-3 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>Calibrated to role level
+          </p>
+        </div>
+
+        <!-- Over-Qualified Card -->
+        <div class="glass-card rounded-2xl p-6 flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-bold uppercase tracking-wider text-pwc-grey">Over-Qualified</span>
+            <span class="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
+              <i data-lucide="trending-up" class="w-4 h-4"></i>
+            </span>
+          </div>
+          <div id="kpiOverCount" class="text-3xl font-bold text-pwc-charcoal num">0</div>
+          <p class="text-xs text-pwc-grey mt-3 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-pwc-yellow"></span>Salary premium / retention risk
+          </p>
+        </div>
+
+        <!-- Under-Qualified Card -->
+        <div class="glass-card rounded-2xl p-6 flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-bold uppercase tracking-wider text-pwc-grey">Under-Qualified</span>
+            <span class="w-8 h-8 rounded-xl bg-rose-50 text-rose-700 flex items-center justify-center">
+              <i data-lucide="alert-circle" class="w-4 h-4"></i>
+            </span>
+          </div>
+          <div id="kpiUnderCount" class="text-3xl font-bold text-pwc-charcoal num">0</div>
+          <p class="text-xs text-pwc-grey mt-3 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-pwc-rose"></span>Needs upskilling investment
+          </p>
+        </div>
+      </div>
+
+      <!-- Charts & Executive Rationale Grid -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div class="lg:col-span-3">
-          <h4 class="text-xs font-bold uppercase tracking-wider text-pwc-slate mb-2">Candidates (up to 8)</h4>
-          <div id="benchPicker" role="group" aria-label="Candidates to compare" class="space-y-1.5 max-h-80 overflow-y-auto pr-1"></div>
-          <div class="flex gap-2 mt-3"><button onclick="benchSelectTop(5)" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-pwc-line hover:border-pwc-orange">Top 5</button><button onclick="benchClear()" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-pwc-line hover:border-pwc-orange">Clear</button></div>
+        <div class="lg:col-span-7 glass-card rounded-2xl p-6 flex flex-col justify-between">
+          <div class="flex flex-wrap items-start justify-between gap-2 mb-4">
+            <div>
+              <h3 class="font-serif text-lg font-bold text-pwc-charcoal">JD Match Score by Candidate</h3>
+              <p class="text-xs text-pwc-grey mt-0.5">Ranked alignment percentage colour-coded by qualification tier</p>
+            </div>
+            <div class="flex items-center gap-3 text-[11px] font-semibold text-pwc-slate">
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-xs bg-pwc-orange"></span>Optimal</span>
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-xs bg-pwc-yellow"></span>Over</span>
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-xs bg-pwc-rose"></span>Under</span>
+            </div>
+          </div>
+          <div class="relative h-72 w-full">
+            <canvas id="overviewBarChart" role="img" aria-label="Bar chart of JD match score per candidate"></canvas>
+          </div>
         </div>
-        <div class="lg:col-span-9">
-          <div class="relative h-[420px] w-full"><canvas id="benchRadar" role="img" aria-label="Radar chart comparing selected candidates with the JD benchmark across five competency dimensions. The data is repeated in the table below."></canvas></div>
-          <p id="benchNote" class="text-xs text-pwc-grey mt-2"></p>
+
+        <div class="lg:col-span-5 glass-card rounded-2xl p-6 flex flex-col justify-between">
+          <div>
+            <h3 class="font-serif text-lg font-bold text-pwc-charcoal">Talent Pool Calibration</h3>
+            <p class="text-xs text-pwc-grey mt-0.5 mb-4">Distribution across qualification tiers</p>
+            <div class="relative h-48 w-full">
+              <canvas id="tierDoughnutChart" role="img" aria-label="Doughnut chart of qualification tiers"></canvas>
+            </div>
+          </div>
+          <div class="mt-5 p-4 rounded-xl bg-pwc-surface border-l-4 border-l-pwc-orange border border-pwc-line text-xs leading-relaxed">
+            <div class="flex items-center gap-1.5 font-bold text-pwc-burgundy uppercase tracking-wider text-[10px] mb-1">
+              <i data-lucide="file-check-2" class="w-3.5 h-3.5"></i>
+              <span>Recommendation & Rationale</span>
+            </div>
+            <span id="executiveSummaryText" class="text-pwc-charcoal font-medium">Run a screening to see the synthesised summary.</span>
+          </div>
         </div>
       </div>
     </div>
-    <div class="glass-card rounded-2xl p-6"><h4 class="font-serif text-lg font-bold mb-1">Competency gap analysis</h4><p class="text-xs text-pwc-grey mb-4">Points below the JD benchmark (100). Dimensions without enough evidence are flagged, not scored as zero.</p><div id="benchGap" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div></div>
-    <div class="glass-card rounded-2xl p-6"><h4 class="font-serif text-lg font-bold mb-3">Strongest, weakest and average competency</h4><div id="benchHighlights" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div></div>
-    <div class="glass-card rounded-2xl p-6">
-      <h4 class="font-serif text-lg font-bold mb-3">Competency comparison table</h4>
-      <div class="overflow-x-auto rounded-xl border border-pwc-line"><table class="min-w-full text-left text-xs" id="benchTable"></table></div>
-      <div class="mt-6"><h5 class="text-sm font-bold mb-2">Candidate-to-candidate comparison</h5>
-        <div class="flex flex-wrap items-end gap-3 mb-3"><div><label for="benchA" class="block text-[11px] font-bold uppercase text-pwc-grey">Candidate A</label><select id="benchA" onchange="renderBenchAB()" class="px-3 py-1.5 rounded-lg border border-pwc-line text-xs font-semibold bg-white"></select></div>
-          <span class="text-xs font-bold text-pwc-grey pb-2">vs</span>
-          <div><label for="benchB" class="block text-[11px] font-bold uppercase text-pwc-grey">Candidate B</label><select id="benchB" onchange="renderBenchAB()" class="px-3 py-1.5 rounded-lg border border-pwc-line text-xs font-semibold bg-white"></select></div></div>
-        <div id="benchAB" class="text-xs"></div></div>
-    </div>
-    <div class="glass-card rounded-2xl p-6"><div id="weightsPanel"></div>
-      <details class="mt-4 rounded-xl border border-pwc-line p-4 text-xs text-pwc-slate"><summary class="cursor-pointer font-bold text-pwc-charcoal">Scoring methodology</summary><div id="methodologyBody" class="mt-3 space-y-2 leading-relaxed"></div></details></div>
-  </div>
 
-  <div id="rp-fincmp" class="hidden space-y-6">
-    <div class="glass-card rounded-2xl p-6">
-      <div class="flex flex-col md:flex-row md:items-start justify-between gap-3 mb-4">
-        <div><span class="eyebrow">Reports & Analytics</span><h3 class="font-serif text-xl font-bold">Financial comparison (PKR)</h3>
-          <p class="text-xs text-pwc-grey max-w-2xl">Side-by-side hiring economics from the Cost-Benefit inputs saved for each candidate. Candidates without salary inputs show “—”.</p></div>
-        <div class="flex gap-2"><button onclick="exportFinancialPDF()" class="px-3.5 py-2 rounded-lg bg-pwc-orange hover:bg-pwc-burgundy text-black hover:text-white text-xs font-bold">Download PDF</button>
-          <button onclick="exportFinancialExcel()" class="px-3.5 py-2 rounded-lg border border-pwc-charcoal text-xs font-bold hover:bg-pwc-charcoal hover:text-white">Download Excel</button></div>
+    <!-- B. CANDIDATE RANKING -->
+    <div id="rp-ranking" class="hidden space-y-6">
+      <div class="glass-card rounded-2xl p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-2 border-b border-pwc-line">
+          <div>
+            <h3 class="font-serif text-xl font-bold text-pwc-charcoal">Final Candidate Ranking</h3>
+            <p class="text-xs text-pwc-grey mt-0.5">Optimal-fit candidates prioritized first, ordered by JD match score. Click any row to inspect ranking rationale.</p>
+          </div>
+          <span id="engineBadge" class="self-start px-3 py-1 rounded-full border text-[11px] font-bold bg-gray-100 text-pwc-slate border-gray-200"></span>
+        </div>
+        <ol id="rankingList" class="divide-y divide-pwc-line"></ol>
       </div>
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div class="lg:col-span-3"><h4 class="text-xs font-bold uppercase tracking-wider text-pwc-slate mb-2">Candidates to compare</h4><div id="finPicker" role="group" aria-label="Candidates to compare" class="space-y-1.5 max-h-72 overflow-y-auto pr-1"></div>
-          <div class="grid grid-cols-2 gap-2 mt-3"><div><label for="finSortKey" class="block text-[11px] font-bold uppercase text-pwc-grey">Sort by</label><select id="finSortKey" onchange="renderFinCompare()" class="w-full px-2 py-1.5 rounded-lg border border-pwc-line text-xs font-semibold bg-white"><option value="roi">ROI</option><option value="recruitCost">Recruitment cost</option><option value="variance">Salary variance</option><option value="rank">Screening rank</option></select></div>
-            <div><label for="finSortDir" class="block text-[11px] font-bold uppercase text-pwc-grey">Order</label><select id="finSortDir" onchange="renderFinCompare()" class="w-full px-2 py-1.5 rounded-lg border border-pwc-line text-xs font-semibold bg-white"><option value="desc">High → low</option><option value="asc">Low → high</option></select></div></div></div>
-        <div class="lg:col-span-9"><div class="overflow-x-auto rounded-xl border border-pwc-line"><table class="min-w-full text-left text-xs" id="finCmpTable"></table></div>
-          <div class="mt-3 p-3.5 rounded-xl bg-pwc-light border border-pwc-line text-xs text-pwc-slate leading-relaxed"><strong>Read with care:</strong> the revenue multiplier is an assumption-based scenario, not measured productivity. The highest ROI is not automatically the best hire; weigh it against competency fit and mandatory requirements shown alongside.</div></div>
+
+      <div>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div>
+            <h3 class="font-serif text-xl font-bold text-pwc-charcoal">Ranked Candidate Shortlist</h3>
+            <p class="text-xs text-pwc-grey mt-0.5">Filter by qualification tier or launch detailed candidate dossiers</p>
+          </div>
+          <div class="flex flex-wrap gap-1.5" id="qualificationFilters">
+            <button onclick="filterCandidates('ALL')" class="filter-pill px-3.5 py-2 rounded-xl text-xs font-bold bg-pwc-charcoal text-white">All</button>
+            <button onclick="filterCandidates('Optimal Fit')" class="filter-pill px-3.5 py-2 rounded-xl text-xs font-semibold bg-white border border-pwc-line text-pwc-slate hover:border-pwc-orange">Optimal Fit</button>
+            <button onclick="filterCandidates('Over-Qualified')" class="filter-pill px-3.5 py-2 rounded-xl text-xs font-semibold bg-white border border-pwc-line text-pwc-slate hover:border-pwc-orange">Over-Qualified</button>
+            <button onclick="filterCandidates('Under-Qualified')" class="filter-pill px-3.5 py-2 rounded-xl text-xs font-semibold bg-white border border-pwc-line text-pwc-slate hover:border-pwc-orange">Under-Qualified</button>
+          </div>
+        </div>
+        <div id="candidateCardsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-5"></div>
       </div>
     </div>
-  </div>
-</section>
-</main>
 
-<footer class="bg-white border-t border-pwc-line mt-12">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-pwc-grey">
-    <div class="flex items-center gap-2.5"><img src="logo.png" alt="" class="h-6 w-auto object-contain" onerror="this.style.display='none'"><span>© 2026 TalentLens. AI-assisted screening supports, and does not replace, recruiter judgement.</span></div>
-    <div>Not an officially endorsed PwC product unless separately approved.</div>
-  </div>
-</footer>
+    <!-- C. COMPETENCY BENCHMARKING -->
+    <div id="rp-benchmark" class="hidden space-y-6">
+      <div class="glass-card rounded-2xl p-6">
+        <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 pb-5 mb-5 border-b border-pwc-line">
+          <div>
+            <span class="eyebrow">Workforce Analytics</span>
+            <h3 class="font-serif text-xl font-bold text-pwc-charcoal mt-0.5">Competency Benchmarking</h3>
+            <p class="text-xs text-pwc-grey max-w-2xl mt-1">Target JD benchmark (100 across all five dimensions) versus selected candidates, calibrated from CV evidence.</p>
+          </div>
+          <div class="flex gap-2 shrink-0">
+            <button onclick="exportBenchmarkPDF()" class="px-4 py-2 rounded-xl bg-pwc-orange hover:bg-pwc-burgundy text-pwc-charcoal hover:text-white text-xs font-bold transition-colors shadow-sm">Download PDF</button>
+            <button onclick="exportBenchmarkExcel()" class="px-4 py-2 rounded-xl border border-pwc-charcoal text-xs font-bold hover:bg-pwc-charcoal hover:text-white transition-colors">Download Excel</button>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-3 bg-pwc-surface rounded-xl p-4 border border-pwc-line flex flex-col justify-between">
+            <div>
+              <h4 class="text-[11px] font-bold uppercase tracking-wider text-pwc-slate mb-2.5">Select Candidates (Max 8)</h4>
+              <div id="benchPicker" role="group" aria-label="Candidates to compare" class="space-y-1.5 max-h-80 overflow-y-auto pr-1"></div>
+            </div>
+            <div class="flex gap-2 mt-4 pt-3 border-t border-pwc-line">
+              <button onclick="benchSelectTop(5)" class="flex-1 text-xs font-bold px-2.5 py-2 rounded-lg bg-white border border-pwc-line hover:border-pwc-orange transition-colors">Top 5</button>
+              <button onclick="benchClear()" class="flex-1 text-xs font-bold px-2.5 py-2 rounded-lg bg-white border border-pwc-line hover:border-pwc-orange transition-colors">Clear</button>
+            </div>
+          </div>
+          <div class="lg:col-span-9">
+            <div class="relative h-[420px] w-full">
+              <canvas id="benchRadar" role="img" aria-label="Radar chart comparing selected candidates with the JD benchmark across five competency dimensions. The data is repeated in the table below."></canvas>
+            </div>
+            <p id="benchNote" class="text-xs text-pwc-grey mt-3 bg-pwc-surface px-3.5 py-2 rounded-lg border border-pwc-line"></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-2xl p-6">
+        <h4 class="font-serif text-lg font-bold text-pwc-charcoal mb-1">Competency Gap Analysis</h4>
+        <p class="text-xs text-pwc-grey mb-4">Points below the target JD benchmark (100). Dimensions lacking sufficient CV evidence are flagged rather than zeroed.</p>
+        <div id="benchGap" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+      </div>
+
+      <div class="glass-card rounded-2xl p-6">
+        <h4 class="font-serif text-lg font-bold text-pwc-charcoal mb-4">Strongest, Weakest & Average Competency</h4>
+        <div id="benchHighlights" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+      </div>
+
+      <div class="glass-card rounded-2xl p-6">
+        <h4 class="font-serif text-lg font-bold text-pwc-charcoal mb-4">Competency Comparison Matrix</h4>
+        <div class="overflow-x-auto rounded-xl border border-pwc-line">
+          <table class="min-w-full text-left text-xs" id="benchTable"></table>
+        </div>
+        <div class="mt-6 pt-5 border-t border-pwc-line">
+          <h5 class="text-sm font-bold text-pwc-charcoal mb-3">Head-to-Head Candidate Comparison</h5>
+          <div class="flex flex-wrap items-end gap-3 mb-4">
+            <div>
+              <label for="benchA" class="block text-[10px] font-bold uppercase tracking-wider text-pwc-grey mb-1">Candidate A</label>
+              <select id="benchA" onchange="renderBenchAB()" class="px-3.5 py-2 rounded-xl border border-pwc-line text-xs font-bold bg-pwc-surface"></select>
+            </div>
+            <span class="text-xs font-bold text-pwc-orange pb-2.5 px-1">VS</span>
+            <div>
+              <label for="benchB" class="block text-[10px] font-bold uppercase tracking-wider text-pwc-grey mb-1">Candidate B</label>
+              <select id="benchB" onchange="renderBenchAB()" class="px-3.5 py-2 rounded-xl border border-pwc-line text-xs font-bold bg-pwc-surface"></select>
+            </div>
+          </div>
+          <div id="benchAB" class="text-xs bg-pwc-surface p-4 rounded-xl border border-pwc-line"></div>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-2xl p-6">
+        <div id="weightsPanel"></div>
+        <details class="mt-4 rounded-xl border border-pwc-line bg-pwc-surface p-4 text-xs text-pwc-slate">
+          <summary class="cursor-pointer font-bold text-pwc-charcoal flex items-center justify-between">
+            <span>Scoring & Calibration Methodology</span>
+            <i data-lucide="chevron-down" class="w-4 h-4 chev-rotate transition-transform"></i>
+          </summary>
+          <div id="methodologyBody" class="mt-3 pt-3 border-t border-pwc-line space-y-2 leading-relaxed"></div>
+        </details>
+      </div>
+    </div>
+
+    <!-- D. FINANCIAL COMPARISON -->
+    <div id="rp-fincmp" class="hidden space-y-6">
+      <div class="glass-card rounded-2xl p-6">
+        <div class="flex flex-col md:flex-row md:items-start justify-between gap-4 pb-5 mb-5 border-b border-pwc-line">
+          <div>
+            <span class="eyebrow">Executive Economics</span>
+            <h3 class="font-serif text-xl font-bold text-pwc-charcoal mt-0.5">Financial Comparison (PKR)</h3>
+            <p class="text-xs text-pwc-grey max-w-2xl mt-1">Side-by-side hiring economics derived from Cost-Benefit inputs saved per candidate. Candidates without salary inputs display “—”.</p>
+          </div>
+          <div class="flex gap-2 shrink-0">
+            <button onclick="exportFinancialPDF()" class="px-4 py-2 rounded-xl bg-pwc-orange hover:bg-pwc-burgundy text-pwc-charcoal hover:text-white text-xs font-bold transition-colors shadow-sm">Download PDF</button>
+            <button onclick="exportFinancialExcel()" class="px-4 py-2 rounded-xl border border-pwc-charcoal text-xs font-bold hover:bg-pwc-charcoal hover:text-white transition-colors">Download Excel</button>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div class="lg:col-span-3 bg-pwc-surface rounded-xl p-4 border border-pwc-line flex flex-col justify-between">
+            <div>
+              <h4 class="text-[11px] font-bold uppercase tracking-wider text-pwc-slate mb-2.5">Candidates to Compare</h4>
+              <div id="finPicker" role="group" aria-label="Candidates to compare" class="space-y-1.5 max-h-72 overflow-y-auto pr-1"></div>
+            </div>
+            <div class="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-pwc-line">
+              <div>
+                <label for="finSortKey" class="block text-[10px] font-bold uppercase text-pwc-grey mb-1">Sort by</label>
+                <select id="finSortKey" onchange="renderFinCompare()" class="w-full px-2.5 py-1.5 rounded-lg border border-pwc-line text-xs font-bold bg-white">
+                  <option value="roi">ROI</option>
+                  <option value="recruitCost">Recruitment cost</option>
+                  <option value="variance">Salary variance</option>
+                  <option value="rank">Screening rank</option>
+                </select>
+              </div>
+              <div>
+                <label for="finSortDir" class="block text-[10px] font-bold uppercase text-pwc-grey mb-1">Order</label>
+                <select id="finSortDir" onchange="renderFinCompare()" class="w-full px-2.5 py-1.5 rounded-lg border border-pwc-line text-xs font-bold bg-white">
+                  <option value="desc">High → low</option>
+                  <option value="asc">Low → high</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="lg:col-span-9">
+            <div class="overflow-x-auto rounded-xl border border-pwc-line">
+              <table class="min-w-full text-left text-xs" id="finCmpTable"></table>
+            </div>
+            <div class="mt-4 p-4 rounded-xl bg-pwc-surface border-l-4 border-l-pwc-charcoal border border-pwc-line text-xs text-pwc-slate leading-relaxed">
+              <strong class="text-pwc-charcoal">Executive Governance Note:</strong> The revenue multiplier is an assumption-based scenario, not measured productivity. The highest ROI is not automatically the optimal hire; weigh financial variance alongside competency alignment and mandatory requirements.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  </main>
+
+  <!-- Minimalist Enterprise Footer -->
+  <footer class="bg-white border-t border-pwc-line mt-auto">
+    <div class="max-w-[1380px] mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-pwc-grey">
+      <div class="flex items-center gap-2.5">
+        <img src="logo.png" alt="" class="h-5 w-auto object-contain" onerror="this.style.display='none'">
+        <span>© 2026 TalentLens. AI-assisted screening supports, and does not replace, recruiter judgement.</span>
+      </div>
+      <div class="text-[11px] font-medium">Not an officially endorsed PwC product unless separately approved.</div>
+    </div>
+  </footer>
+</div>
 
 <script>
 // =========================================================================
@@ -334,8 +686,8 @@ const candById = id => cands().find(c => c.id === id) || null;
 
 function setTabButton(btn, on) {
   btn.classList.toggle('active', on); btn.setAttribute('aria-selected', on ? 'true' : 'false');
-  btn.classList.toggle('text-pwc-charcoal', on); btn.classList.toggle('font-bold', on);
-  btn.classList.toggle('text-pwc-grey', !on); btn.classList.toggle('font-medium', !on);
+  btn.classList.toggle('text-white', on); btn.classList.toggle('font-bold', on);
+  btn.classList.toggle('text-gray-300', !on); btn.classList.toggle('font-medium', !on);
 }
 
 function switchTab(tabId) {
@@ -374,9 +726,9 @@ function clearJD() { state.jdText = ''; $('jdTextInput').value = ''; $('jdFileBa
 function setupDragAndDrop() {
   const z = $('cvDropZone'); if (!z) return;
   ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(n => z.addEventListener(n, e => { e.preventDefault(); e.stopPropagation(); }));
-  z.addEventListener('dragover', () => z.classList.add('border-pwc-orange'));
-  z.addEventListener('dragleave', () => z.classList.remove('border-pwc-orange'));
-  z.addEventListener('drop', e => { z.classList.remove('border-pwc-orange'); if (e.dataTransfer?.files?.length) handleCVFiles(e.dataTransfer.files); });
+  z.addEventListener('dragover', () => z.classList.add('border-pwc-orange', 'bg-orange-50/30'));
+  z.addEventListener('dragleave', () => z.classList.remove('border-pwc-orange', 'bg-orange-50/30'));
+  z.addEventListener('drop', e => { z.classList.remove('border-pwc-orange', 'bg-orange-50/30'); if (e.dataTransfer?.files?.length) handleCVFiles(e.dataTransfer.files); });
 }
 
 
@@ -767,22 +1119,22 @@ function renderCVQueue() {
   $('queuedCountText').innerText = `${n} file${n === 1 ? '' : 's'} ready`;
   $('clearCVsBtn').classList.toggle('hidden', n === 0);
   if (!n) {
-    list.innerHTML = `<div class="text-center py-8 px-4 rounded-xl bg-gray-50 border border-gray-100"><p class="text-xs text-pwc-grey">No CVs imported yet. Upload files above or click <strong class="text-pwc-charcoal">"Load Sample Engagement"</strong> to test.</p></div>`;
+    list.innerHTML = `<div class="text-center py-9 px-4 rounded-2xl bg-pwc-surface border border-pwc-line"><p class="text-xs text-pwc-grey">No CVs imported yet. Upload files above or click <strong class="text-pwc-charcoal">"Load Sample Inputs"</strong> to test.</p></div>`;
     return;
   }
-  const qc = { Good: 'text-emerald-700', Fair: 'text-amber-700', Poor: 'text-rose-700' };
+  const qc = { Good: 'text-emerald-700 bg-emerald-50 border-emerald-200', Fair: 'text-amber-800 bg-amber-50 border-amber-200', Poor: 'text-rose-700 bg-rose-50 border-rose-200' };
   list.innerHTML = state.uploadedCVs.map(cv => {
     const isDoc = /\.docx?$/i.test(cv.fileName), isImg = /\.(png|jpe?g|webp)$/i.test(cv.fileName);
-    const badge = isDoc ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-red-50 text-pwc-burgundy border-red-200';
+    const badge = isDoc ? 'bg-blue-50 text-blue-800 border-blue-200' : 'bg-orange-50 text-pwc-burgundy border-orange-200';
     const label = isDoc ? 'DOCX' : isImg ? 'IMG-OCR' : (cv.ocr ? 'PDF-OCR' : 'PDF');
     const pv = cv.preview;
     const detail = pv
-      ? `Detected: <strong>${esc(pv.name)}</strong> • ${pv.roles} role${pv.roles === 1 ? '' : 's'} (${pv.complete} with title + company) • ${pv.edu} education • Parse: <strong class="${qc[pv.quality]}">${pv.quality}</strong>`
+      ? `Detected: <strong class="text-pwc-charcoal">${esc(pv.name)}</strong> • ${pv.roles} role${pv.roles === 1 ? '' : 's'} (${pv.complete} complete) • ${pv.edu} edu • <span class="px-1.5 py-0.5 rounded border text-[10px] font-bold ${qc[pv.quality]}">Parse: ${pv.quality}</span>`
       : 'No text layer: AI will read the page image';
-    return `<div class="flex items-center justify-between p-3 rounded-xl bg-white border border-gray-200 hover:border-pwc-orange/50 transition">
-      <div class="flex items-center gap-3 min-w-0"><span class="px-2 py-1 rounded text-[10px] font-bold border ${badge} shrink-0">${label}</span>
-        <div class="min-w-0"><p class="text-xs font-semibold truncate">${esc(cv.fileName)}</p><p class="text-[11px] text-pwc-grey">${esc(cv.sizeLabel)} • ${detail}</p></div></div>
-      <button onclick="removeCV('${cv.id}')" class="p-1.5 text-gray-400 hover:text-pwc-burgundy rounded-lg" title="Remove"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`;
+    return `<div class="flex items-center justify-between p-3.5 rounded-xl bg-white border border-pwc-line hover:border-pwc-orange/60 transition-all shadow-2xs">
+      <div class="flex items-center gap-3 min-w-0"><span class="px-2 py-1 rounded-md text-[10px] font-bold border ${badge} shrink-0">${label}</span>
+        <div class="min-w-0"><p class="text-xs font-bold text-pwc-charcoal truncate">${esc(cv.fileName)}</p><p class="text-[11px] text-pwc-grey mt-0.5 leading-relaxed">${esc(cv.sizeLabel)} • ${detail}</p></div></div>
+      <button onclick="removeCV('${cv.id}')" class="p-1.5 text-pwc-grey hover:text-pwc-burgundy hover:bg-rose-50 rounded-lg transition-colors" title="Remove"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`;
   }).join('');
   icons();
 }
@@ -1084,7 +1436,7 @@ function mandatorySummary(c) {
 // =========================================================================
 async function checkAIStatus() {
   const el = $('aiStatusChip'); if (!el) return;
-  const set = (t, c) => { el.innerText = t; el.className = 'px-2 py-0.5 rounded-full border text-[11px] font-semibold ' + c; };
+  const set = (t, c) => { el.innerText = t; el.className = 'px-2.5 py-0.5 rounded-full border text-[11px] font-bold ' + c; };
   try {
     const r = await fetch(ANALYZE_ENDPOINT, { method: 'GET' }); const j = await r.json();
     if (j.configured) set('AI connected', 'bg-emerald-50 text-emerald-700 border-emerald-200');
@@ -1193,7 +1545,7 @@ async function runRecruitmentAnalysis() {
     loader.classList.add('hidden'); loader.classList.remove('flex');
     try {
       $('activeRoleLabel').innerText = result.roleTitle; $('candidateCountBadge').innerText = result.candidates.length;
-      const eb = $('exportReportBtn'); eb.classList.remove('hidden'); eb.classList.add('flex');
+      const eb = $('exportReportBtn'); eb.classList.remove('hidden'); eb.classList.add('inline-flex');
       state.reportTab = 'overview'; switchTab('reports');
       if (result.engine === 'local') showToast('AI unavailable (' + reason.substring(0, 80) + '). Showing evidence-based local estimates.', 'warning');
       else showToast(`Evaluated ${result.candidates.length} candidates against "${result.roleTitle}".`, 'success');
@@ -1258,33 +1610,33 @@ function finResultFor(c) {
 }
 
 function cbaTemplate(c, u) {
-  const inp = 'w-full px-3 py-2 rounded-lg border border-pwc-line text-sm font-semibold focus:border-pwc-orange num';
+  const inp = 'w-full px-3.5 py-2.5 rounded-xl border border-pwc-line bg-pwc-surface/60 focus:bg-white text-sm font-bold focus:border-pwc-orange num';
   return `<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
   <div class="lg:col-span-5 glass-card rounded-2xl p-6 space-y-5">
-    <div><span class="eyebrow">Financial inputs (PKR)</span><h3 class="font-serif text-lg font-bold">${esc(c.name)} <span class="text-xs font-sans font-medium text-pwc-grey">${esc(c.id)}</span></h3>
-      <p class="text-xs text-pwc-grey mt-1">Annual figures unless stated. Inputs are saved against this candidate and job.</p></div>
-    <div><label for="${u}-role" class="block text-xs font-semibold text-pwc-slate mb-1">Expected role salary (annual budget)</label><input id="${u}-role" data-f="roleSalary" inputmode="numeric" placeholder="e.g. 2,500,000" class="${inp}"></div>
-    <div><div class="flex items-center justify-between mb-1"><label for="${u}-cand" class="block text-xs font-semibold text-pwc-slate">Candidate expected salary</label>
-        <div role="group" aria-label="Salary entry mode" class="inline-flex rounded-lg border border-pwc-line overflow-hidden text-[11px] font-bold"><button type="button" data-f="modeAnnual" class="px-2.5 py-1">Annual</button><button type="button" data-f="modeMonthly" class="px-2.5 py-1">Monthly</button></div></div>
+    <div class="pb-4 border-b border-pwc-line"><span class="eyebrow">Financial Assumptions (PKR)</span><h3 class="font-serif text-xl font-bold text-pwc-charcoal mt-0.5">${esc(c.name)} <span class="text-xs font-sans font-semibold text-pwc-grey">${esc(c.id)}</span></h3>
+      <p class="text-xs text-pwc-grey mt-1">Annual figures unless specified. Inputs auto-save against this candidate profile.</p></div>
+    <div><label for="${u}-role" class="block text-[11px] font-bold uppercase tracking-wider text-pwc-slate mb-1.5">Expected Role Salary (Annual Budget)</label><input id="${u}-role" data-f="roleSalary" inputmode="numeric" placeholder="e.g. 2,500,000" class="${inp}"></div>
+    <div><div class="flex items-center justify-between mb-1.5"><label for="${u}-cand" class="block text-[11px] font-bold uppercase tracking-wider text-pwc-slate">Candidate Expected Salary</label>
+        <div role="group" aria-label="Salary entry mode" class="inline-flex rounded-lg border border-pwc-line overflow-hidden text-[11px] font-bold"><button type="button" data-f="modeAnnual" class="px-2.5 py-1 transition-colors">Annual</button><button type="button" data-f="modeMonthly" class="px-2.5 py-1 transition-colors">Monthly</button></div></div>
       <input id="${u}-cand" data-f="candSalary" inputmode="numeric" placeholder="Annual, e.g. 2,000,000" class="${inp}">
       <input id="${u}-candm" data-f="candMonthly" inputmode="numeric" placeholder="Monthly, e.g. 166,667" aria-label="Candidate expected monthly salary" class="${inp} hidden">
-      <p data-f="annualised" class="text-[11px] text-pwc-grey mt-1"></p></div>
-    <div><div class="flex justify-between text-xs font-semibold text-pwc-slate mb-1"><label for="${u}-agency">Recruitment agency fee (% of expected salary)</label><span data-f="agencyLabel" class="text-pwc-burgundy font-bold num">0%</span></div>
+      <p data-f="annualised" class="text-[11px] text-pwc-burgundy font-medium mt-1.5"></p></div>
+    <div class="p-3.5 rounded-xl bg-pwc-surface border border-pwc-line"><div class="flex justify-between text-xs font-bold text-pwc-slate mb-1"><label for="${u}-agency">Recruitment Agency Fee (%)</label><span data-f="agencyLabel" class="text-pwc-burgundy font-bold num">0%</span></div>
       <input id="${u}-agency" type="range" data-f="agencySlider" min="0" max="30" step="0.5" value="0" class="w-full" aria-label="Agency fee percentage">
-      <div class="flex items-center gap-2 mt-1"><input data-f="agencyPct" inputmode="decimal" aria-label="Agency fee percentage (number)" class="${inp} !w-24"><span class="text-xs text-pwc-grey">% = <strong data-f="agencyFeeText" class="num text-pwc-charcoal">PKR 0</strong></span></div></div>
-    <div><div class="flex justify-between text-xs font-semibold text-pwc-slate mb-1"><label for="${u}-mult">Revenue multiplier (assumption)</label><span data-f="multLabel" class="text-pwc-burgundy font-bold num">1.0x</span></div>
+      <div class="flex items-center gap-2.5 mt-1.5"><input data-f="agencyPct" inputmode="decimal" aria-label="Agency fee percentage (number)" class="${inp} !w-24 !py-1.5 !bg-white"><span class="text-xs text-pwc-grey">% = <strong data-f="agencyFeeText" class="num text-pwc-charcoal">PKR 0</strong></span></div></div>
+    <div class="p-3.5 rounded-xl bg-pwc-surface border border-pwc-line"><div class="flex justify-between text-xs font-bold text-pwc-slate mb-1"><label for="${u}-mult">Revenue Multiplier (Scenario)</label><span data-f="multLabel" class="text-pwc-burgundy font-bold num">1.0x</span></div>
       <input id="${u}-mult" type="range" data-f="multSlider" min="1" max="5" step="0.1" value="1" class="w-full" aria-label="Revenue multiplier">
-      <div class="flex items-center gap-2 mt-1"><input data-f="multiplier" inputmode="decimal" aria-label="Revenue multiplier (number)" class="${inp} !w-24"><span class="text-xs text-pwc-grey">x annual expected salary</span></div>
-      <p class="text-[11px] text-pwc-grey mt-1">Scenario assumption: projected annual revenue = expected salary × multiplier. It is not a measure of actual productivity.</p></div>
-    <div><label for="${u}-other" class="block text-xs font-semibold text-pwc-slate mb-1">Additional one-off recruitment costs (verification, onboarding, admin)</label><input id="${u}-other" data-f="otherCosts" inputmode="numeric" placeholder="e.g. 150,000" class="${inp}"></div>
-    <p data-f="errors" role="alert" class="text-xs text-rose-700 font-semibold"></p>
-    <div class="flex items-center gap-3"><button type="button" data-f="reset" class="text-xs font-semibold px-3 py-1.5 rounded-lg border border-pwc-line hover:border-pwc-orange">Reset inputs</button><span data-f="saved" class="text-[11px] text-pwc-grey"></span></div>
+      <div class="flex items-center gap-2.5 mt-1.5"><input data-f="multiplier" inputmode="decimal" aria-label="Revenue multiplier (number)" class="${inp} !w-24 !py-1.5 !bg-white"><span class="text-xs text-pwc-grey">× annual expected salary</span></div>
+      <p class="text-[11px] text-pwc-grey mt-2 leading-relaxed">Scenario assumption: projected annual revenue = expected salary × multiplier. Not a measure of verified productivity.</p></div>
+    <div><label for="${u}-other" class="block text-[11px] font-bold uppercase tracking-wider text-pwc-slate mb-1.5">Additional One-Off Recruitment Costs</label><input id="${u}-other" data-f="otherCosts" inputmode="numeric" placeholder="e.g. 150,000" class="${inp}"></div>
+    <p data-f="errors" role="alert" class="text-xs text-rose-700 font-bold"></p>
+    <div class="flex items-center justify-between pt-2 border-t border-pwc-line"><button type="button" data-f="reset" class="text-xs font-bold px-3.5 py-2 rounded-xl border border-pwc-line hover:border-pwc-orange transition-colors">Reset inputs</button><span data-f="saved" class="text-[11px] font-semibold text-emerald-700"></span></div>
   </div>
   <div class="lg:col-span-7 space-y-6">
-    <div data-f="kpis" aria-live="polite" class="grid grid-cols-2 xl:grid-cols-4 gap-3"></div>
-    <div class="glass-card rounded-2xl p-5"><h4 class="text-sm font-bold mb-3">How the numbers fit together</h4><div data-f="breakdown" class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs"></div></div>
-    <div class="glass-card rounded-2xl p-5"><h4 class="text-sm font-bold mb-1">First-year cost vs projected revenue</h4><div class="relative h-56"><canvas data-f="chart" role="img" aria-label="Stacked bar comparing first-year hiring cost with projected annual revenue"></canvas></div>
-      <p data-f="note" class="mt-3 text-xs text-pwc-slate leading-relaxed"></p></div>
+    <div data-f="kpis" aria-live="polite" class="grid grid-cols-2 xl:grid-cols-4 gap-3.5"></div>
+    <div class="glass-card rounded-2xl p-6"><h4 class="font-serif text-base font-bold text-pwc-charcoal mb-3.5">Financial Breakdown Summary</h4><div data-f="breakdown" class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs"></div></div>
+    <div class="glass-card rounded-2xl p-6"><h4 class="font-serif text-base font-bold text-pwc-charcoal mb-1">First-Year Cost vs Projected Revenue</h4><p class="text-xs text-pwc-grey mb-3">Stacked comparison of total hiring expenditure against scenario revenue</p><div class="relative h-56"><canvas data-f="chart" role="img" aria-label="Stacked bar comparing first-year hiring cost with projected annual revenue"></canvas></div>
+      <p data-f="note" class="mt-4 p-3.5 rounded-xl bg-pwc-surface border border-pwc-line text-xs text-pwc-slate leading-relaxed"></p></div>
   </div>
 </div>`;
 }
@@ -1303,11 +1655,11 @@ function renderCBA(root, cand) {
 
   const setMode = m => {
     mode = m; f('candSalary').classList.toggle('hidden', m === 'monthly'); f('candMonthly').classList.toggle('hidden', m !== 'monthly');
-    [['modeAnnual', 'annual'], ['modeMonthly', 'monthly']].forEach(([k, v]) => { const b = f(k); b.className = 'px-2.5 py-1 ' + (m === v ? 'bg-pwc-charcoal text-white' : 'bg-white text-pwc-slate'); b.setAttribute('aria-pressed', m === v); });
+    [['modeAnnual', 'annual'], ['modeMonthly', 'monthly']].forEach(([k, v]) => { const b = f(k); b.className = 'px-2.5 py-1 transition-colors ' + (m === v ? 'bg-pwc-charcoal text-white' : 'bg-white text-pwc-slate'); b.setAttribute('aria-pressed', m === v); });
   };
   const read = () => ({ roleSalary: f('roleSalary').value, salaryMode: mode, candSalary: f('candSalary').value, candMonthly: f('candMonthly').value, agencyPct: f('agencyPct').value, multiplier: f('multiplier').value, otherCosts: f('otherCosts').value });
 
-  const kpi = (label, value, sub, tone) => `<div class="glass-card rounded-xl p-3.5 ${tone || ''}"><div class="text-[11px] font-semibold uppercase text-pwc-grey leading-tight">${label}</div><div class="text-base sm:text-lg font-bold mt-1 num break-words">${value}</div><div class="text-[11px] text-pwc-grey mt-0.5">${sub || ''}</div></div>`;
+  const kpi = (label, value, sub, tone) => `<div class="glass-card rounded-2xl p-4 ${tone || ''}"><div class="text-[10px] font-bold uppercase tracking-wider text-pwc-grey leading-tight">${label}</div><div class="text-base sm:text-lg font-bold mt-1.5 num break-words">${value}</div><div class="text-[11px] text-pwc-grey mt-1">${sub || ''}</div></div>`;
 
   const refresh = (save = true) => {
     const rawNow = read(); const ann = annualise(rawNow); const v = FinEngine.validate(ann);
@@ -1328,9 +1680,9 @@ function renderCBA(root, cand) {
       kpi('Total first-year hiring cost', fmtPKR(r.totalCost), 'Salary + agency fee + other'),
       kpi('Projected annual revenue', fmtPKR(r.revenue), 'Assumption-based scenario'),
       kpi('Est. first-year net benefit', fmtPKR(r.net), 'Revenue − total cost', r.net == null ? '' : r.net >= 0 ? 'border-l-4 border-l-emerald-600' : 'border-l-4 border-l-rose-600'),
-      kpi('Est. first-year ROI', r.roi == null ? '—' : fmtSigned(r.roi), r.roi == null ? 'Needs candidate salary & multiplier' : 'Net benefit ÷ total cost', 'border-l-4 border-l-pwc-orange')
+      kpi('Est. first-year ROI', r.roi == null ? '—' : fmtSigned(r.roi), r.roi == null ? 'Needs candidate salary & multiplier' : 'Net benefit ÷ total cost', 'bg-pwc-charcoal !text-white border-pwc-charcoal')
     ].join('');
-    const row = (a, b, c) => `<div class="rounded-lg bg-pwc-light p-3"><div class="font-bold text-pwc-charcoal">${a}</div><div class="num text-sm font-bold mt-0.5">${b}</div><div class="text-pwc-grey mt-0.5">${c}</div></div>`;
+    const row = (a, b, c) => `<div class="rounded-xl bg-pwc-surface border border-pwc-line p-3.5"><div class="font-bold text-pwc-charcoal">${a}</div><div class="num text-base font-bold text-pwc-burgundy mt-1">${b}</div><div class="text-pwc-grey mt-0.5">${c}</div></div>`;
     f('breakdown').innerHTML = [
       row('Salary budget savings', fmtPKR(r.variance), 'Role budget minus candidate expectation'),
       row('Recruitment expenditure', fmtPKR(r.recruitCost), 'Agency fee + additional one-off costs'),
@@ -1340,19 +1692,19 @@ function renderCBA(root, cand) {
     f('note').innerText = missingSal ? 'Enter the candidate’s expected salary to see costs, benefit and ROI. No ROI is shown while required inputs are missing.'
       : `Total first-year cost ${fmtPKR(r.totalCost)} against projected revenue ${fmtPKR(r.revenue)}. This is a scenario based on the multiplier you set, not verified productivity. Read it together with competency fit and mandatory requirements.`;
     drawChart(r);
-    if (save) { Store.set(finKey(cand.id), rawNow); if (FinEngine.toNum(rawNow.roleSalary) > 0) Store.set(`role:${state.jobId}`, rawNow.roleSalary); f('saved').innerText = 'Saved'; }
+    if (save) { Store.set(finKey(cand.id), rawNow); if (FinEngine.toNum(rawNow.roleSalary) > 0) Store.set(`role:${state.jobId}`, rawNow.roleSalary); f('saved').innerText = '✓ Saved'; }
   };
   const drawChart = r => {
     const cv = f('chart'); if (typeof Chart === 'undefined' || !cv) return;
     if (root._chart) root._chart.destroy();
     root._chart = new Chart(cv.getContext('2d'), { type: 'bar',
       data: { labels: ['First-year cost', 'Projected revenue'], datasets: [
-        { label: 'Salary', data: [r.candSalary || 0, 0], backgroundColor: '#2D2D2D', stack: 's' },
-        { label: 'Agency fee', data: [r.agencyFee || 0, 0], backgroundColor: '#FD5108', stack: 's' },
-        { label: 'Other costs', data: [r.otherCosts || 0, 0], backgroundColor: '#FFB600', stack: 's' },
-        { label: 'Projected revenue (assumption)', data: [0, r.revenue || 0], backgroundColor: '#0072B2', stack: 's' }] },
-      options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, animation: { duration: 250 }, plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: c => `${c.dataset.label}: ${fmtPKR(c.raw)}` } } },
-        scales: { x: { stacked: true, ticks: { callback: v => 'PKR ' + (v / 1e6).toFixed(1) + 'M' } }, y: { stacked: true } } } });
+        { label: 'Salary', data: [r.candSalary || 0, 0], backgroundColor: '#2D2D2D', stack: 's', borderRadius: 4 },
+        { label: 'Agency fee', data: [r.agencyFee || 0, 0], backgroundColor: '#FD5108', stack: 's', borderRadius: 4 },
+        { label: 'Other costs', data: [r.otherCosts || 0, 0], backgroundColor: '#FFB600', stack: 's', borderRadius: 4 },
+        { label: 'Projected revenue (assumption)', data: [0, r.revenue || 0], backgroundColor: '#0072B2', stack: 's', borderRadius: 4 }] },
+      options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, animation: { duration: 250 }, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, font: { size: 11 } } }, tooltip: { backgroundColor: '#2D2D2D', padding: 10, cornerRadius: 8, callbacks: { label: c => `${c.dataset.label}: ${fmtPKR(c.raw)}` } } },
+        scales: { x: { stacked: true, grid: { color: '#EFEDE8' }, ticks: { font: { size: 11 }, callback: v => 'PKR ' + (v / 1e6).toFixed(1) + 'M' } }, y: { stacked: true, grid: { display: false }, ticks: { font: { size: 11, weight: 'bold' } } } } } });
   };
 
   f('modeAnnual').onclick = () => { setMode('annual'); refresh(); };
@@ -1394,7 +1746,7 @@ function sortedFinRows(ids, key, dir) {
 }
 function renderFinPicker() {
   state.fin.selected = state.fin.selected.filter(id => cands().some(c => c.id === id));
-  $('finPicker').innerHTML = cands().map(c => `<label class="flex items-center gap-2 text-xs p-2 rounded-lg border border-pwc-line hover:border-pwc-orange cursor-pointer"><input type="checkbox" class="w-4 h-4 accent-[#FD5108]" value="${esc(c.id)}" ${state.fin.selected.includes(c.id) ? 'checked' : ''} onchange="toggleFin(this.value,this.checked)"><span class="font-semibold truncate">#${c.rank} ${esc(c.name)}</span></label>`).join('');
+  $('finPicker').innerHTML = cands().map(c => `<label class="flex items-center gap-2.5 text-xs p-2.5 rounded-xl bg-white border border-pwc-line hover:border-pwc-orange cursor-pointer transition-colors"><input type="checkbox" class="w-4 h-4 accent-[#FD5108] rounded" value="${esc(c.id)}" ${state.fin.selected.includes(c.id) ? 'checked' : ''} onchange="toggleFin(this.value,this.checked)"><span class="font-bold text-pwc-charcoal truncate">#${c.rank} ${esc(c.name)}</span></label>`).join('');
 }
 function toggleFin(id, on) { const s = new Set(state.fin.selected); on ? s.add(id) : s.delete(id); state.fin.selected = [...s]; state.fin.touched = true; renderFinCompare(true); }
 function finTableData(rows) {
@@ -1407,9 +1759,9 @@ function renderFinCompare(fromToggle) {
   const rows = sortedFinRows(state.fin.selected, $('finSortKey').value, $('finSortDir').value);
   const t = finTableData(rows);
   const missing = rows.filter(x => !x.r).length;
-  $('finCmpTable').innerHTML = `<thead class="bg-pwc-charcoal text-white"><tr>${t.head.map(h => `<th scope="col" class="py-2.5 px-3 font-semibold whitespace-nowrap">${h}</th>`).join('')}</tr></thead>
-    <tbody class="divide-y divide-pwc-line bg-white">${rows.map((x, i) => `<tr class="hover:bg-pwc-surface"><th scope="row" class="py-2.5 px-3 text-left font-bold whitespace-nowrap">${esc(x.name)}<div class="text-[10px] font-normal text-pwc-grey">${esc(x.id)} · rank #${x.rank}</div></th>${t.body[i].slice(1).map((v, k) => `<td class="py-2.5 px-3 num whitespace-nowrap ${k === 7 && x.roi != null ? (x.roi >= 0 ? 'text-emerald-700 font-bold' : 'text-rose-700 font-bold') : ''}">${esc(v)}</td>`).join('')}</tr>`).join('') || '<tr><td class="p-4 text-pwc-grey" colspan="12">Select at least one candidate.</td></tr>'}</tbody>`
-    + (missing ? `<caption class="caption-bottom text-left text-[11px] text-pwc-grey p-2">${missing} candidate(s) have no salary inputs yet. Enter them in Cost-Benefit Analysis.</caption>` : '');
+  $('finCmpTable').innerHTML = `<thead class="bg-pwc-charcoal text-white"><tr>${t.head.map(h => `<th scope="col" class="py-3 px-3.5 font-bold whitespace-nowrap">${h}</th>`).join('')}</tr></thead>
+    <tbody class="divide-y divide-pwc-line bg-white">${rows.map((x, i) => `<tr class="transition-colors"><th scope="row" class="py-3 px-3.5 text-left font-bold whitespace-nowrap">${esc(x.name)}<div class="text-[10px] font-normal text-pwc-grey">${esc(x.id)} · rank #${x.rank}</div></th>${t.body[i].slice(1).map((v, k) => `<td class="py-3 px-3.5 num whitespace-nowrap ${k === 7 && x.roi != null ? (x.roi >= 0 ? 'text-emerald-700 font-bold' : 'text-rose-700 font-bold') : ''}">${esc(v)}</td>`).join('')}</tr>`).join('') || '<tr><td class="p-6 text-center text-pwc-grey" colspan="12">Select at least one candidate to display financial metrics.</td></tr>'}</tbody>`
+    + (missing ? `<caption class="caption-bottom text-left text-[11px] text-pwc-grey p-3 bg-pwc-surface border-t border-pwc-line">${missing} candidate(s) have no salary inputs yet. Enter them in Cost-Benefit Analysis.</caption>` : '');
 }
 function renderFinPickerIfNeeded() { const el = $('finPicker'), sig = cands().map(c => c.id).join(','); if (el.dataset.sig !== sig) { state.fin.selected = state.fin.selected.filter(id => cands().some(c => c.id === id)); renderFinPicker(); el.dataset.sig = sig; } }
 
@@ -1417,7 +1769,7 @@ function renderFinPickerIfNeeded() { const el = $('finPicker'), sig = cands().ma
 // =========================================================================
 // TALENTLENS: REPORTS & ANALYTICS, RANKING, CANDIDATE ASSESSMENT, BENCHMARKING, EXPORTS
 // =========================================================================
-const getBadge = s => { const m = { 'Optimal Fit': 'bg-emerald-50 text-emerald-800 border-emerald-200', 'Over-Qualified': 'bg-amber-50 text-amber-800 border-amber-200', 'Under-Qualified': 'bg-rose-50 text-rose-800 border-rose-200' }; return `<span class="px-2 py-0.5 rounded-md border text-[11px] font-bold ${m[s] || m['Optimal Fit']}">${esc(s)}</span>`; };
+const getBadge = s => { const m = { 'Optimal Fit': 'bg-emerald-50 text-emerald-800 border-emerald-200', 'Over-Qualified': 'bg-amber-50 text-amber-800 border-amber-200', 'Under-Qualified': 'bg-rose-50 text-rose-800 border-rose-200' }; return `<span class="px-2.5 py-0.5 rounded-full border text-[11px] font-bold ${m[s] || m['Optimal Fit']}">${esc(s)}</span>`; };
 const getStatusBadgeHTML = getBadge;
 const wrapLabel = l => { const w = l.split(' '); const out = []; let cur = ''; w.forEach(x => { if ((cur + ' ' + x).trim().length > 16 && cur) { out.push(cur); cur = x; } else cur = (cur + ' ' + x).trim(); }); if (cur) out.push(cur); return out; };
 const hexA = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`; };
@@ -1425,7 +1777,7 @@ const dimLabel = k => DIMENSIONS[k].label;
 
 // ---------- Reports shell ----------
 const REPORT_TABS = [{ id: 'overview', label: 'Screening Overview' }, { id: 'ranking', label: 'Candidate Ranking' }, { id: 'benchmark', label: 'Competency Benchmarking' }, { id: 'fincmp', label: 'Financial Comparison' }];
-function pillClass(on) { return 'px-3.5 py-2 rounded-lg text-xs font-bold border transition ' + (on ? 'bg-pwc-charcoal text-white border-pwc-charcoal' : 'bg-white text-pwc-slate border-pwc-line hover:border-pwc-orange'); }
+function pillClass(on) { return 'px-4 py-2 rounded-xl text-xs font-bold border transition-all ' + (on ? 'bg-pwc-charcoal text-white border-pwc-charcoal shadow-sm' : 'bg-white text-pwc-slate border-pwc-line hover:border-pwc-orange hover:text-pwc-charcoal'); }
 function goReports(tab) { state.reportTab = tab; if (state.tab === 'reports') renderReports(); else switchTab('reports'); }
 function renderReports() {
   $('reportTabs').innerHTML = REPORT_TABS.map(t => `<button role="tab" aria-selected="${state.reportTab === t.id}" onclick="goReports('${t.id}')" class="${pillClass(state.reportTab === t.id)}">${t.label}</button>`).join('');
@@ -1447,61 +1799,84 @@ function renderOverview() {
   if (typeof Chart === 'undefined') return;
   if (state.charts.bar) state.charts.bar.destroy();
   state.charts.bar = new Chart($('overviewBarChart').getContext('2d'), { type: 'bar',
-    data: { labels: c.map(x => x.name), datasets: [{ label: 'JD match score (%)', data: c.map(x => x.overallFitScore), backgroundColor: c.map(x => x.qualificationStatus === 'Optimal Fit' ? '#FD5108' : x.qualificationStatus === 'Over-Qualified' ? '#FFB600' : '#DB536A'), borderRadius: 6, maxBarThickness: 40 }] },
-    options: { responsive: true, maintainAspectRatio: false, animation: { duration: 500 }, plugins: { legend: { display: false }, tooltip: { callbacks: { afterLabel: ctx => 'Status: ' + c[ctx.dataIndex].qualificationStatus } } }, scales: { y: { beginAtZero: true, max: 100, grid: { color: '#EFEDE8' } }, x: { grid: { display: false } } } } });
+    data: { labels: c.map(x => x.name), datasets: [{ label: 'JD match score (%)', data: c.map(x => x.overallFitScore), backgroundColor: c.map(x => x.qualificationStatus === 'Optimal Fit' ? '#FD5108' : x.qualificationStatus === 'Over-Qualified' ? '#FFB600' : '#DB536A'), borderRadius: 8, maxBarThickness: 28 }] },
+    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, animation: { duration: 500 },
+      plugins: { legend: { display: false }, tooltip: { backgroundColor: '#2D2D2D', padding: 10, cornerRadius: 8, callbacks: { label: ctx => `JD Match Score: ${ctx.raw}%`, afterLabel: ctx => 'Tier: ' + c[ctx.dataIndex].qualificationStatus } } },
+      scales: { x: { beginAtZero: true, max: 100, grid: { color: '#EFEDE8' }, ticks: { font: { size: 11 }, callback: v => v + '%' } }, y: { grid: { display: false }, ticks: { font: { size: 12, weight: '600' }, color: '#2D2D2D' } } } } });
   if (state.charts.doughnut) state.charts.doughnut.destroy();
   const cnt = s => c.filter(x => x.qualificationStatus === s).length;
   state.charts.doughnut = new Chart($('tierDoughnutChart').getContext('2d'), { type: 'doughnut',
-    data: { labels: ['Optimal Fit', 'Over-Qualified', 'Under-Qualified'], datasets: [{ data: [cnt('Optimal Fit'), cnt('Over-Qualified'), cnt('Under-Qualified')], backgroundColor: ['#FD5108', '#FFB600', '#DB536A'], borderWidth: 2, borderColor: '#FFF' }] },
-    options: { responsive: true, maintainAspectRatio: false, cutout: '66%', plugins: { legend: { position: 'right', labels: { boxWidth: 12, padding: 14 } } } } });
+    data: { labels: ['Optimal Fit', 'Over-Qualified', 'Under-Qualified'], datasets: [{ data: [cnt('Optimal Fit'), cnt('Over-Qualified'), cnt('Under-Qualified')], backgroundColor: ['#FD5108', '#FFB600', '#DB536A'], borderWidth: 3, borderColor: '#FFFFFF', hoverOffset: 4 }] },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '68%', plugins: { legend: { position: 'right', labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 10, padding: 16, font: { size: 12, weight: '600' }, color: '#2D2D2D' } }, tooltip: { backgroundColor: '#2D2D2D', padding: 10, cornerRadius: 8 } } } });
 }
 
 // ---------- Ranking list with rationale ----------
 function renderRankingList(data) {
   const b = { ai: ['AI-evaluated', 'bg-emerald-50 text-emerald-700 border-emerald-200'], local: ['Local engine: evidence-based estimates, AI not used', 'bg-amber-50 text-amber-800 border-amber-200'] }[data.engine] || ['', ''];
-  const eb = $('engineBadge'); eb.innerText = b[0]; eb.className = 'self-start px-2.5 py-1 rounded-full border text-[11px] font-semibold ' + b[1];
-  $('rankingList').innerHTML = data.candidates.map(c => `<li class="border-b border-pwc-line last:border-0"><details ${c.rank === 1 ? 'open' : ''}>
-    <summary class="flex items-center gap-3 py-3 cursor-pointer"><span class="w-7 h-7 rounded-full bg-pwc-charcoal text-white text-xs font-bold flex items-center justify-center shrink-0">${c.rank}</span>
-      <div class="min-w-0 flex-1"><div class="text-sm font-bold truncate">${esc(c.name)} <span class="text-[10px] font-medium text-pwc-grey">${esc(c.id)}</span></div><div class="text-[11px] text-pwc-grey truncate">${esc(c.currentRoleTitle)} • ${c.yearsExperience || '?'} yrs exp.</div></div>
-      ${getBadge(c.qualificationStatus)}<span class="text-sm font-bold text-pwc-burgundy w-12 text-right num">${c.overallFitScore}%</span></summary>
-    <div class="pb-4 pl-10 pr-2 text-xs text-pwc-slate space-y-2">
+  const eb = $('engineBadge'); eb.innerText = b[0]; eb.className = 'self-start px-3 py-1 rounded-full border text-[11px] font-bold ' + b[1];
+  $('rankingList').innerHTML = data.candidates.map(c => `<li class="py-1"><details ${c.rank === 1 ? 'open' : ''} class="group rounded-xl transition-colors ${c.rank === 1 ? 'bg-orange-50/35 px-3' : 'px-2 hover:bg-pwc-surface'}">
+    <summary class="flex items-center gap-3.5 py-3.5 cursor-pointer">
+      <span class="w-8 h-8 rounded-xl ${c.rank === 1 ? 'bg-pwc-orange text-pwc-charcoal shadow-xs' : 'bg-pwc-charcoal text-white'} text-xs font-bold flex items-center justify-center shrink-0 num">#${c.rank}</span>
+      <div class="min-w-0 flex-1">
+        <div class="text-sm font-bold text-pwc-charcoal truncate flex items-center gap-2">
+          <span>${esc(c.name)}</span>
+          <span class="text-[10px] font-semibold text-pwc-grey bg-white px-1.5 py-0.5 rounded border border-pwc-line">${esc(c.id)}</span>
+          ${c.rank === 1 ? '<span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded bg-pwc-charcoal text-white">Top Pick</span>' : ''}
+        </div>
+        <div class="text-xs text-pwc-grey truncate mt-0.5">${esc(c.currentRoleTitle)} • <strong>${c.yearsExperience || '?'} yrs</strong> exp.</div>
+      </div>
+      ${getBadge(c.qualificationStatus)}
+      <div class="text-right w-16 shrink-0">
+        <span class="text-base font-bold text-pwc-burgundy num">${c.overallFitScore}%</span>
+      </div>
+      <i data-lucide="chevron-down" class="w-4 h-4 text-pwc-grey chev-rotate transition-transform shrink-0"></i>
+    </summary>
+    <div class="pb-4 pl-11 pr-3 text-xs text-pwc-slate space-y-3 border-t border-pwc-line/60 pt-3">
       <p class="font-bold text-pwc-charcoal">Why ${esc(c.name)} is ranked #${c.rank}</p>
       <ul class="list-disc list-inside space-y-1">${c.ranking.reasons.map(r => `<li>${esc(r)}</li>`).join('')}</ul>
-      ${c.ranking.compare.length ? `<div class="rounded-lg bg-pwc-light p-2.5 space-y-1"><strong class="text-pwc-charcoal">Head-to-head</strong>${c.ranking.compare.map(r => `<p>${esc(r)}</p>`).join('')}</div>` : ''}
-      ${c.strengths.length ? `<div><strong class="text-pwc-charcoal">Evidence for strengths</strong><ul class="list-disc list-inside">${c.strengths.map(r => `<li>${esc(r)}</li>`).join('')}</ul></div>` : ''}
-      ${c.gaps.length ? `<div><strong class="text-pwc-charcoal">Gaps / risks</strong><ul class="list-disc list-inside">${c.gaps.map(r => `<li>${esc(r)}</li>`).join('')}</ul></div>` : ''}
-      <button onclick="openAssessment('${esc(c.id)}','matching')" class="text-xs font-bold text-pwc-burgundy hover:underline">Open full assessment →</button>
+      ${c.ranking.compare.length ? `<div class="rounded-xl bg-white border border-pwc-line p-3 space-y-1"><strong class="text-pwc-charcoal block text-[11px] uppercase tracking-wider">Head-to-Head Comparison</strong>${c.ranking.compare.map(r => `<p>${esc(r)}</p>`).join('')}</div>` : ''}
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        ${c.strengths.length ? `<div class="rounded-xl bg-emerald-50/50 border border-emerald-200/70 p-3"><strong class="text-emerald-900 block mb-1">Evidence for Strengths</strong><ul class="list-disc list-inside space-y-0.5">${c.strengths.map(r => `<li>${esc(r)}</li>`).join('')}</ul></div>` : ''}
+        ${c.gaps.length ? `<div class="rounded-xl bg-rose-50/50 border border-rose-200/70 p-3"><strong class="text-rose-900 block mb-1">Identified Gaps / Risks</strong><ul class="list-disc list-inside space-y-0.5">${c.gaps.map(r => `<li>${esc(r)}</li>`).join('')}</ul></div>` : ''}
+      </div>
+      <div class="pt-1">
+        <button onclick="openAssessment('${esc(c.id)}','matching')" class="inline-flex items-center gap-1.5 text-xs font-bold text-pwc-burgundy hover:underline"><span>Open full candidate assessment</span><span>→</span></button>
+      </div>
     </div></details></li>`).join('');
+  icons();
 }
 
 function filterCandidates(status) {
   state.activeFilter = status;
   document.querySelectorAll('.filter-pill').forEach(btn => {
     const on = btn.getAttribute('onclick').includes(`'${status}'`);
-    btn.className = 'filter-pill px-3 py-1.5 rounded-lg text-xs font-semibold ' + (on ? 'bg-pwc-charcoal text-white' : 'bg-white border border-pwc-line text-pwc-slate hover:border-pwc-orange');
+    btn.className = 'filter-pill px-3.5 py-2 rounded-xl text-xs font-bold transition-all ' + (on ? 'bg-pwc-charcoal text-white shadow-xs' : 'bg-white border border-pwc-line text-pwc-slate hover:border-pwc-orange');
   });
   renderCandidateCards(status);
 }
 function renderCandidateCards(filterStatus) {
   const grid = $('candidateCardsGrid'), all = cands();
   const list = filterStatus === 'ALL' ? all : all.filter(c => c.qualificationStatus === filterStatus);
-  if (!list.length) { grid.innerHTML = `<div class="col-span-full text-center py-8 bg-white rounded-2xl border border-pwc-line text-xs text-pwc-grey">No candidates match the "${esc(filterStatus)}" filter.</div>`; return; }
+  if (!list.length) { grid.innerHTML = `<div class="col-span-full text-center py-10 bg-white rounded-2xl border border-pwc-line text-xs text-pwc-grey">No candidates match the "${esc(filterStatus)}" filter.</div>`; return; }
   grid.innerHTML = list.map(c => {
     const m = mandatorySummary(c), r = finResultFor(c), id = esc(c.id);
-    return `<div class="glass-card rounded-2xl p-5 flex flex-col justify-between ${c.rank === 1 ? 'ring-2 ring-pwc-orange/70' : ''}"><div>
-      <div class="flex items-start justify-between gap-3"><div><div class="flex items-center gap-2 flex-wrap"><h4 class="text-base font-bold"><span class="text-pwc-burgundy">#${c.rank}</span> ${esc(c.name)}</h4>${c.rank === 1 ? '<span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded bg-pwc-orange text-black">Best fit</span>' : ''}${c.checks && c.checks.length ? `<span class="px-2 py-0.5 text-[10px] font-bold rounded bg-amber-100 text-amber-900" title="${esc(c.checks.join(' | '))}">⚠ Review data</span>` : ''}</div>
-        <p class="text-xs text-pwc-grey mt-0.5">${esc(c.currentRoleTitle)} • <strong>${c.yearsExperience || '?'} yrs</strong> • ${id}</p></div>
-        <div class="text-right shrink-0"><div class="text-xl font-bold text-pwc-burgundy num">${c.overallFitScore}%</div><span class="text-[10px] uppercase tracking-wider text-pwc-grey">JD match</span></div></div>
-      <div class="mt-3 flex flex-wrap items-center gap-2">${getBadge(c.qualificationStatus)}<span class="text-[11px] text-pwc-slate">Mandatory: <strong>${m.total ? m.met + '/' + m.total + ' met' : 'n/a'}</strong></span><span class="text-[11px] text-pwc-slate">ROI: <strong>${r && r.roi != null ? fmtSigned(r.roi) : 'not entered'}</strong></span></div>
-      <div class="mt-3 flex flex-wrap gap-1.5">${c.coreCompetencies.map(x => `<span class="px-2 py-0.5 rounded-md bg-pwc-light text-[11px] font-medium">${esc(x)}</span>`).join('')}</div>
-      <div class="mt-3.5 p-3 rounded-xl bg-pwc-surface border border-pwc-line text-xs text-pwc-slate space-y-2">
-        <div><strong class="text-pwc-charcoal block mb-0.5">Why ranked #${c.rank}</strong><span>${esc(c.ranking.compare[0] || c.ranking.reasons[0])}</span></div>
-        <div><strong class="text-pwc-charcoal block mb-0.5">Qualification rationale</strong><span>${esc(c.qualificationRationale)}</span></div>
-        ${c.bestFitRationale ? `<div class="pt-2 border-t border-pwc-line text-pwc-burgundy"><strong class="block mb-0.5">Why best fit</strong><span>${esc(c.bestFitRationale)}</span></div>` : ''}</div></div>
-      <div class="mt-4 pt-3 border-t border-pwc-line flex flex-wrap items-center justify-between gap-2">
-        <button onclick="openAssessment('${id}','overview')" class="text-xs font-bold hover:text-pwc-burgundy">Open assessment</button>
-        <button onclick="benchFocus('${id}')" class="text-xs font-bold text-pwc-burgundy">Benchmark</button>
-        <button onclick="openCBA('${id}');switchTab('cba')" class="text-xs font-bold hover:text-pwc-burgundy">Cost-benefit</button></div></div>`;
+    return `<div class="glass-card rounded-2xl p-6 flex flex-col justify-between hover:shadow-card-hover transition-all ${c.rank === 1 ? 'ring-2 ring-pwc-orange' : ''}"><div>
+      <div class="flex items-start justify-between gap-3"><div><div class="flex items-center gap-2 flex-wrap"><h4 class="text-base font-bold text-pwc-charcoal"><span class="text-pwc-burgundy num">#${c.rank}</span> ${esc(c.name)}</h4>${c.rank === 1 ? '<span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded bg-pwc-orange text-pwc-charcoal">Best fit</span>' : ''}${c.checks && c.checks.length ? `<span class="px-2 py-0.5 text-[10px] font-bold rounded bg-amber-100 text-amber-900" title="${esc(c.checks.join(' | '))}">⚠ Review data</span>` : ''}</div>
+        <p class="text-xs text-pwc-grey mt-1">${esc(c.currentRoleTitle)} • <strong>${c.yearsExperience || '?'} yrs</strong> • ${id}</p></div>
+        <div class="text-right shrink-0 bg-pwc-surface px-3 py-1.5 rounded-xl border border-pwc-line"><div class="text-xl font-bold text-pwc-burgundy num">${c.overallFitScore}%</div><span class="text-[9px] font-bold uppercase tracking-wider text-pwc-grey block">JD Match</span></div></div>
+      <div class="mt-3.5 flex flex-wrap items-center gap-2.5">${getBadge(c.qualificationStatus)}<span class="text-[11px] text-pwc-slate bg-pwc-surface px-2.5 py-0.5 rounded-md border border-pwc-line">Mandatory: <strong>${m.total ? m.met + '/' + m.total + ' met' : 'n/a'}</strong></span><span class="text-[11px] text-pwc-slate bg-pwc-surface px-2.5 py-0.5 rounded-md border border-pwc-line">ROI: <strong>${r && r.roi != null ? fmtSigned(r.roi) : 'not entered'}</strong></span></div>
+      <div class="mt-3.5 flex flex-wrap gap-1.5">${c.coreCompetencies.map(x => `<span class="px-2.5 py-1 rounded-lg bg-pwc-light text-pwc-charcoal text-[11px] font-semibold">${esc(x)}</span>`).join('')}</div>
+      <div class="mt-4 p-3.5 rounded-xl bg-pwc-surface border border-pwc-line text-xs text-pwc-slate space-y-2.5">
+        <div><strong class="text-pwc-charcoal block text-[11px] uppercase tracking-wider mb-0.5">Why ranked #${c.rank}</strong><span>${esc(c.ranking.compare[0] || c.ranking.reasons[0])}</span></div>
+        <div><strong class="text-pwc-charcoal block text-[11px] uppercase tracking-wider mb-0.5">Qualification rationale</strong><span>${esc(c.qualificationRationale)}</span></div>
+        ${c.bestFitRationale ? `<div class="pt-2.5 border-t border-pwc-line text-pwc-burgundy"><strong class="block text-[11px] uppercase tracking-wider mb-0.5">Why best fit</strong><span class="font-medium">${esc(c.bestFitRationale)}</span></div>` : ''}</div></div>
+      <div class="mt-5 pt-3.5 border-t border-pwc-line flex flex-wrap items-center justify-between gap-2">
+        <button onclick="openAssessment('${id}','overview')" class="text-xs font-bold text-pwc-charcoal hover:text-pwc-burgundy transition-colors">Open assessment →</button>
+        <div class="flex items-center gap-3">
+          <button onclick="benchFocus('${id}')" class="text-xs font-bold text-pwc-burgundy hover:underline">Benchmark</button>
+          <span class="text-pwc-line">|</span>
+          <button onclick="openCBA('${id}');switchTab('cba')" class="text-xs font-bold text-pwc-slate hover:text-pwc-charcoal">Cost-benefit</button>
+        </div></div></div>`;
   }).join('');
 }
 
@@ -1515,7 +1890,7 @@ function renderAssessment() {
   const c = candById(state.assessId); if (!c) return;
   $('assessCandSelect').innerHTML = candOptions(c.id);
   const m = mandatorySummary(c);
-  $('assessHeader').innerHTML = `<div class="flex flex-wrap items-center gap-2"><h2 class="font-serif text-xl font-bold">${esc(c.name)}</h2>${getBadge(c.qualificationStatus)}<span class="text-xs text-pwc-grey">${esc(c.id)} · rank #${c.rank} of ${cands().length}</span></div><p class="text-xs text-pwc-grey">${esc(c.currentRoleTitle)} · ${c.yearsExperience || '?'} yrs · JD match ${c.overallFitScore}% · mandatory ${m.total ? m.met + '/' + m.total + ' met' : 'n/a'}</p>`;
+  $('assessHeader').innerHTML = `<div class="flex flex-wrap lg:justify-end items-center gap-2.5"><h2 class="font-serif text-xl sm:text-2xl font-bold text-pwc-charcoal">${esc(c.name)}</h2>${getBadge(c.qualificationStatus)}<span class="text-xs font-bold px-2.5 py-1 rounded-lg bg-pwc-light text-pwc-charcoal">${esc(c.id)} · Rank #${c.rank} of ${cands().length}</span></div><p class="text-xs text-pwc-grey mt-1">${esc(c.currentRoleTitle)} · <strong>${c.yearsExperience || '?'} yrs</strong> · JD match <strong class="text-pwc-burgundy">${c.overallFitScore}%</strong> · mandatory <strong>${m.total ? m.met + '/' + m.total + ' met' : 'n/a'}</strong></p>`;
   $('assessTabs').innerHTML = ASSESS_TABS.map(t => `<button role="tab" aria-selected="${state.assessTab === t.id}" onclick="setAssessTab('${t.id}')" class="${pillClass(state.assessTab === t.id)}">${t.label}</button>`).join('');
   const body = $('assessBody');
   if (body._chart) { body._chart.destroy(); body._chart = null; }
@@ -1526,69 +1901,71 @@ function renderAssessment() {
 }
 const listOr = (arr, none) => arr.length ? arr.map(x => `<li>${esc(x)}</li>`).join('') : `<li class="text-pwc-grey list-none">${none}</li>`;
 function assessOverview(c) {
-  const wh = c.workHistory.length ? c.workHistory.map(w => `<div class="pl-3 border-l-2 border-pwc-line"><div class="font-bold">${esc(w.roleTitle || 'Role not stated')}${w.verified === false ? ' <span class="text-[10px] font-semibold text-amber-700">⚠ unverified</span>' : ''}</div><div class="text-[11px] text-pwc-burgundy font-medium">${esc(w.companyName || 'Company not stated')} • ${esc(w.tenure || '')}</div>${w.keySummary ? `<p class="text-[11px] text-pwc-slate mt-0.5">${esc(w.keySummary)}</p>` : ''}</div>`).join('') : '<p class="text-pwc-grey text-xs">Work history not detected in CV text.</p>';
+  const wh = c.workHistory.length ? c.workHistory.map(w => `<div class="pl-4 py-1 border-l-2 border-pwc-orange"><div class="font-bold text-sm text-pwc-charcoal">${esc(w.roleTitle || 'Role not stated')}${w.verified === false ? ' <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 ml-1">⚠ unverified</span>' : ''}</div><div class="text-xs text-pwc-burgundy font-semibold mt-0.5">${esc(w.companyName || 'Company not stated')} • ${esc(w.tenure || '')}</div>${w.keySummary ? `<p class="text-xs text-pwc-slate mt-1 leading-relaxed">${esc(w.keySummary)}</p>` : ''}</div>`).join('') : '<p class="text-pwc-grey text-xs">Work history not detected in CV text.</p>';
   return `<div class="grid grid-cols-1 lg:grid-cols-3 gap-6"><div class="lg:col-span-2 space-y-6">
-    ${c.checks && c.checks.length ? `<div class="p-4 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900"><strong class="block mb-1">Data checks, please review</strong><ul class="list-disc list-inside space-y-0.5">${c.checks.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>` : ''}
-    <div class="glass-card rounded-2xl p-6"><h3 class="font-serif text-lg font-bold mb-3">Career history & tenure</h3><div class="space-y-3 text-xs">${wh}</div></div>
-    <div class="glass-card rounded-2xl p-6"><h3 class="font-serif text-lg font-bold mb-3">Demonstrated responsibilities</h3><ul class="list-disc list-inside space-y-1.5 text-xs text-pwc-slate">${listOr(c.demonstratedResponsibilities, 'None extracted')}</ul></div></div>
-    <div class="space-y-6"><div class="glass-card rounded-2xl p-6"><h3 class="font-serif text-lg font-bold mb-3">Education & credentials</h3><ul class="list-disc list-inside space-y-1 text-xs text-pwc-slate">${listOr(c.education, 'Not detected in CV text')}</ul></div>
-    <div class="glass-card rounded-2xl p-6 text-xs space-y-2"><h3 class="font-serif text-lg font-bold">Source</h3><p>File: <strong>${esc(c.fileName)}</strong></p><p>Candidate ID: <strong>${esc(c.id)}</strong></p><p>Engine: <strong>${state.analysisResult.engine === 'ai' ? 'AI-evaluated' : 'Local evidence engine'}</strong></p></div></div></div>`;
+    ${c.checks && c.checks.length ? `<div class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-950"><strong class="block font-bold mb-1">Data Integrity Warnings — Please Review</strong><ul class="list-disc list-inside space-y-1">${c.checks.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>` : ''}
+    <div class="glass-card rounded-2xl p-6"><h3 class="font-serif text-lg font-bold text-pwc-charcoal mb-4 pb-2.5 border-b border-pwc-line">Career History & Tenure</h3><div class="space-y-4 text-xs">${wh}</div></div>
+    <div class="glass-card rounded-2xl p-6"><h3 class="font-serif text-lg font-bold text-pwc-charcoal mb-3 pb-2.5 border-b border-pwc-line">Demonstrated Responsibilities</h3><ul class="list-disc list-inside space-y-2 text-xs text-pwc-slate leading-relaxed">${listOr(c.demonstratedResponsibilities, 'None extracted')}</ul></div></div>
+    <div class="space-y-6"><div class="glass-card rounded-2xl p-6"><h3 class="font-serif text-lg font-bold text-pwc-charcoal mb-3 pb-2.5 border-b border-pwc-line">Education & Credentials</h3><ul class="list-disc list-inside space-y-2 text-xs text-pwc-slate">${listOr(c.education, 'Not detected in CV text')}</ul></div>
+    <div class="glass-card rounded-2xl p-6 text-xs space-y-2.5 bg-pwc-surface"><h3 class="font-serif text-base font-bold text-pwc-charcoal">Audit Metadata</h3><p class="flex justify-between"><span class="text-pwc-grey">Source File:</span><strong class="truncate max-w-[160px]">${esc(c.fileName)}</strong></p><p class="flex justify-between"><span class="text-pwc-grey">Candidate ID:</span><strong>${esc(c.id)}</strong></p><p class="flex justify-between"><span class="text-pwc-grey">Scoring Engine:</span><strong>${state.analysisResult.engine === 'ai' ? 'AI-evaluated' : 'Local evidence engine'}</strong></p></div></div></div>`;
 }
 function assessMatching(c) {
   const rv = getReview(c.id);
-  const mand = c.mandatoryChecks.length ? c.mandatoryChecks.map((m, i) => { const o = rv.overrides && rv.overrides[i]; const st = o === 'confirmed' ? 'met' : o === 'not_met' ? 'not_met' : m.status; const tone = { met: 'bg-emerald-50 text-emerald-800', not_met: 'bg-rose-50 text-rose-800', unclear: 'bg-amber-50 text-amber-800' }[st]; return `<tr><td class="py-2 px-3 align-top">${esc(m.requirement)}</td><td class="py-2 px-3 align-top"><span class="px-2 py-0.5 rounded text-[11px] font-bold ${tone}">${{ met: 'Met', not_met: 'Not met', unclear: 'Unclear' }[st]}${o ? ' (recruiter)' : ''}</span></td><td class="py-2 px-3 align-top text-pwc-slate">${esc(m.evidence || '—')}</td></tr>`; }).join('') : '<tr><td colspan="3" class="p-3 text-pwc-grey">No mandatory requirements were identified in the JD.</td></tr>';
+  const mand = c.mandatoryChecks.length ? c.mandatoryChecks.map((m, i) => { const o = rv.overrides && rv.overrides[i]; const st = o === 'confirmed' ? 'met' : o === 'not_met' ? 'not_met' : m.status; const tone = { met: 'bg-emerald-50 text-emerald-800 border border-emerald-200', not_met: 'bg-rose-50 text-rose-800 border border-rose-200', unclear: 'bg-amber-50 text-amber-800 border border-amber-200' }[st]; return `<tr><td class="py-2.5 px-3.5 align-top font-medium">${esc(m.requirement)}</td><td class="py-2.5 px-3.5 align-top whitespace-nowrap"><span class="px-2 py-0.5 rounded-md text-[11px] font-bold ${tone}">${{ met: 'Met', not_met: 'Not met', unclear: 'Unclear' }[st]}${o ? ' (recruiter)' : ''}</span></td><td class="py-2.5 px-3.5 align-top text-pwc-slate">${esc(m.evidence || '—')}</td></tr>`; }).join('') : '<tr><td colspan="3" class="p-4 text-pwc-grey">No mandatory requirements were identified in the JD.</td></tr>';
   return `<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <div class="glass-card rounded-2xl p-6 space-y-3 text-xs"><h3 class="font-serif text-lg font-bold">Why ${esc(c.name)} is ranked #${c.rank}</h3><p class="font-bold">${esc(c.ranking.headline)}</p>
-      <ul class="list-disc list-inside space-y-1 text-pwc-slate">${c.ranking.reasons.map(r => `<li>${esc(r)}</li>`).join('')}</ul>
-      ${c.ranking.compare.length ? `<div class="rounded-lg bg-pwc-light p-3 space-y-1"><strong>Head-to-head</strong>${c.ranking.compare.map(r => `<p>${esc(r)}</p>`).join('')}</div>` : ''}
-      <p class="text-pwc-slate"><strong>Qualification rationale:</strong> ${esc(c.qualificationRationale)}</p></div>
-    <div class="space-y-6"><div class="glass-card rounded-2xl p-6 text-xs"><h3 class="font-serif text-lg font-bold mb-2">Evidence-backed strengths</h3><ul class="list-disc list-inside space-y-1 text-pwc-slate">${listOr(c.strengths, 'No strengths above the evidence threshold')}</ul>
-      <h3 class="font-serif text-lg font-bold mt-4 mb-2">Gaps & risks</h3><ul class="list-disc list-inside space-y-1 text-pwc-slate">${listOr(c.gaps, 'No gaps identified')}</ul></div>
-      <div class="glass-card rounded-2xl p-6 text-xs"><h3 class="font-serif text-lg font-bold mb-2">JD core competencies</h3><div class="flex flex-wrap gap-1.5">${(state.analysisResult.jdCoreCompetencies.length ? state.analysisResult.jdCoreCompetencies : ['None extracted']).map(x => `<span class="px-2.5 py-1 rounded-full bg-pwc-light border border-pwc-line font-semibold ${c.coreCompetencies.some(k => k.toLowerCase() === x.toLowerCase()) ? 'ring-1 ring-pwc-orange' : ''}">${esc(x)}</span>`).join('')}</div>
-      <h3 class="font-serif text-lg font-bold mt-4 mb-2">JD key responsibilities</h3><ul class="list-disc list-inside space-y-1 text-pwc-slate">${listOr(state.analysisResult.jdKeyResponsibilities, 'None extracted')}</ul></div></div>
-    <div class="lg:col-span-2 glass-card rounded-2xl p-6"><h3 class="font-serif text-lg font-bold mb-3">Mandatory qualification requirements</h3><div class="overflow-x-auto rounded-xl border border-pwc-line"><table class="min-w-full text-left text-xs"><thead class="bg-pwc-charcoal text-white"><tr><th class="py-2 px-3">Requirement (from JD)</th><th class="py-2 px-3">Result</th><th class="py-2 px-3">Evidence in CV</th></tr></thead><tbody class="divide-y divide-pwc-line bg-white">${mand}</tbody></table></div></div></div>`;
+    <div class="glass-card rounded-2xl p-6 space-y-3.5 text-xs"><h3 class="font-serif text-lg font-bold text-pwc-charcoal pb-2.5 border-b border-pwc-line">Why ${esc(c.name)} is ranked #${c.rank}</h3><p class="font-bold text-sm text-pwc-burgundy">${esc(c.ranking.headline)}</p>
+      <ul class="list-disc list-inside space-y-1.5 text-pwc-slate leading-relaxed">${c.ranking.reasons.map(r => `<li>${esc(r)}</li>`).join('')}</ul>
+      ${c.ranking.compare.length ? `<div class="rounded-xl bg-pwc-surface border border-pwc-line p-3.5 space-y-1.5"><strong class="text-pwc-charcoal block uppercase text-[10px] tracking-wider">Head-to-Head Comparison</strong>${c.ranking.compare.map(r => `<p>${esc(r)}</p>`).join('')}</div>` : ''}
+      <p class="text-pwc-slate p-3 rounded-xl bg-pwc-light/70"><strong>Qualification rationale:</strong> ${esc(c.qualificationRationale)}</p></div>
+    <div class="space-y-6"><div class="glass-card rounded-2xl p-6 text-xs"><h3 class="font-serif text-base font-bold text-emerald-900 mb-2">Evidence-Backed Strengths</h3><ul class="list-disc list-inside space-y-1.5 text-pwc-slate">${listOr(c.strengths, 'No strengths above the evidence threshold')}</ul>
+      <h3 class="font-serif text-base font-bold text-rose-900 mt-5 mb-2 pt-4 border-t border-pwc-line">Identified Gaps & Risks</h3><ul class="list-disc list-inside space-y-1.5 text-pwc-slate">${listOr(c.gaps, 'No gaps identified')}</ul></div>
+      <div class="glass-card rounded-2xl p-6 text-xs"><h3 class="font-serif text-base font-bold text-pwc-charcoal mb-2.5">JD Core Competencies</h3><div class="flex flex-wrap gap-1.5">${(state.analysisResult.jdCoreCompetencies.length ? state.analysisResult.jdCoreCompetencies : ['None extracted']).map(x => `<span class="px-2.5 py-1 rounded-lg bg-pwc-surface border border-pwc-line font-semibold ${c.coreCompetencies.some(k => k.toLowerCase() === x.toLowerCase()) ? 'border-pwc-orange bg-orange-50/60 text-pwc-burgundy' : ''}">${esc(x)}</span>`).join('')}</div>
+      <h3 class="font-serif text-base font-bold text-pwc-charcoal mt-5 mb-2 pt-4 border-t border-pwc-line">JD Key Responsibilities</h3><ul class="list-disc list-inside space-y-1.5 text-pwc-slate">${listOr(state.analysisResult.jdKeyResponsibilities, 'None extracted')}</ul></div></div>
+    <div class="lg:col-span-2 glass-card rounded-2xl p-6"><h3 class="font-serif text-lg font-bold text-pwc-charcoal mb-3">Mandatory Qualification Requirements</h3><div class="overflow-x-auto rounded-xl border border-pwc-line"><table class="min-w-full text-left text-xs"><thead class="bg-pwc-charcoal text-white"><tr><th class="py-3 px-3.5">Requirement (from JD)</th><th class="py-3 px-3.5">Result</th><th class="py-3 px-3.5">Evidence in CV</th></tr></thead><tbody class="divide-y divide-pwc-line bg-white">${mand}</tbody></table></div></div></div>`;
 }
 function assessCompetency(c) {
   const w = getWeights(), tot = w.reduce((a, b) => a + b, 0), al = weightedAlignment(c);
-  const rows = c.dims.map((d, i) => `<tr><th scope="row" class="py-2.5 px-3 text-left font-bold align-top">${dimLabel(i)}<div class="font-normal text-[10px] text-pwc-grey">weight ${Math.round(w[i] / tot * 100)}%</div></th>
-    <td class="py-2.5 px-3 align-top w-48">${d.score == null ? '<span class="text-amber-800 font-semibold">Insufficient evidence</span>' : `<div class="flex items-center gap-2"><div class="flex-1 h-2 rounded bg-pwc-light"><div class="h-2 rounded bg-pwc-orange" style="width:${d.score}%"></div></div><span class="font-bold num">${d.score}</span></div>`}</td>
-    <td class="py-2.5 px-3 align-top num">${d.coverage}%</td><td class="py-2.5 px-3 align-top text-pwc-slate"><ul class="list-disc list-inside">${d.evidence.map(e => `<li>${esc(e)}</li>`).join('') || '<li class="list-none">—</li>'}</ul></td><td class="py-2.5 px-3 align-top text-pwc-grey">${d.source === 'ai' ? 'AI' : 'Local'}</td></tr>`).join('');
-  return `<div class="grid grid-cols-1 lg:grid-cols-12 gap-6"><div class="lg:col-span-5 glass-card rounded-2xl p-6"><h3 class="font-serif text-lg font-bold mb-1">Candidate vs JD benchmark</h3><p class="text-xs text-pwc-grey mb-3">Weighted alignment: <strong>${al.score == null ? '—' : al.score}</strong> (${al.scored}/5 dimensions scored) · evidence coverage ${avgCoverage(c)}%</p><div class="relative h-80"><canvas id="assessRadar" role="img" aria-label="Radar chart of ${esc(c.name)} against the JD benchmark"></canvas></div></div>
-    <div class="lg:col-span-7 glass-card rounded-2xl p-6"><h3 class="font-serif text-lg font-bold mb-3">Dimension scores & evidence</h3><div class="overflow-x-auto rounded-xl border border-pwc-line"><table class="min-w-full text-left text-xs"><thead class="bg-pwc-charcoal text-white"><tr><th class="py-2 px-3">Dimension</th><th class="py-2 px-3">Score</th><th class="py-2 px-3">Evidence coverage</th><th class="py-2 px-3">Evidence</th><th class="py-2 px-3">Source</th></tr></thead><tbody class="divide-y divide-pwc-line bg-white">${rows}</tbody></table></div></div></div>`;
+  const rows = c.dims.map((d, i) => `<tr><th scope="row" class="py-3 px-3.5 text-left font-bold align-top">${dimLabel(i)}<div class="font-normal text-[10px] text-pwc-grey mt-0.5">weight ${Math.round(w[i] / tot * 100)}%</div></th>
+    <td class="py-3 px-3.5 align-top w-48">${d.score == null ? '<span class="text-amber-800 font-bold">Insufficient evidence</span>' : `<div class="flex items-center gap-2.5"><div class="flex-1 h-2.5 rounded-full bg-pwc-light overflow-hidden"><div class="h-2.5 rounded-full bg-pwc-orange" style="width:${d.score}%"></div></div><span class="font-bold num text-pwc-charcoal">${d.score}</span></div>`}</td>
+    <td class="py-3 px-3.5 align-top num font-semibold">${d.coverage}%</td><td class="py-3 px-3.5 align-top text-pwc-slate"><ul class="list-disc list-inside space-y-1">${d.evidence.map(e => `<li>${esc(e)}</li>`).join('') || '<li class="list-none">—</li>'}</ul></td><td class="py-3 px-3.5 align-top font-semibold text-pwc-grey">${d.source === 'ai' ? 'AI' : 'Local'}</td></tr>`).join('');
+  return `<div class="grid grid-cols-1 lg:grid-cols-12 gap-6"><div class="lg:col-span-5 glass-card rounded-2xl p-6"><h3 class="font-serif text-lg font-bold text-pwc-charcoal mb-1">Candidate vs JD Benchmark</h3><p class="text-xs text-pwc-grey mb-4">Weighted alignment: <strong class="text-pwc-burgundy">${al.score == null ? '—' : al.score}</strong> (${al.scored}/5 dimensions scored) · evidence coverage <strong>${avgCoverage(c)}%</strong></p><div class="relative h-80"><canvas id="assessRadar" role="img" aria-label="Radar chart of ${esc(c.name)} against the JD benchmark"></canvas></div></div>
+    <div class="lg:col-span-7 glass-card rounded-2xl p-6"><h3 class="font-serif text-lg font-bold text-pwc-charcoal mb-4">Dimension Scores & Evidence</h3><div class="overflow-x-auto rounded-xl border border-pwc-line"><table class="min-w-full text-left text-xs"><thead class="bg-pwc-charcoal text-white"><tr><th class="py-3 px-3.5">Dimension</th><th class="py-3 px-3.5">Score</th><th class="py-3 px-3.5">Coverage</th><th class="py-3 px-3.5">Supporting Evidence</th><th class="py-3 px-3.5">Source</th></tr></thead><tbody class="divide-y divide-pwc-line bg-white">${rows}</tbody></table></div></div></div>`;
 }
 function drawAssessRadar(c) {
   const body = $('assessBody'), cv = document.getElementById('assessRadar'); if (!cv || typeof Chart === 'undefined') return;
   body._chart = new Chart(cv.getContext('2d'), radarConfig([c]));
 }
-function reviewSaved(cid) { const el = document.getElementById('reviewSaved'); if (el) el.innerText = 'Saved ' + new Date().toLocaleTimeString(); }
+function reviewSaved(cid) { const el = document.getElementById('reviewSaved'); if (el) el.innerText = '✓ Saved ' + new Date().toLocaleTimeString(); }
 function saveReviewField(cid, field, value) { const r = getReview(cid); r[field] = value; Store.set(reviewKey(cid), r); reviewSaved(cid); }
 function saveOverride(cid, idx, value) { const r = getReview(cid); r.overrides = r.overrides || {}; if (value) r.overrides[idx] = value; else delete r.overrides[idx]; Store.set(reviewKey(cid), r); reviewSaved(cid); renderAssessment(); }
 function assessReview(c) {
   const rv = getReview(c.id), m = mandatorySummary(c), r = finResultFor(c), al = weightedAlignment(c), id = esc(c.id);
-  const rows = c.mandatoryChecks.map((q, i) => `<tr><td class="py-2 px-3 align-top">${esc(q.requirement)}</td><td class="py-2 px-3 align-top">${{ met: 'Met', not_met: 'Not met', unclear: 'Unclear' }[q.status]}</td><td class="py-2 px-3 align-top"><label class="sr-only" for="ov${i}">Recruiter confirmation</label><select id="ov${i}" onchange="saveOverride('${id}',${i},this.value)" class="px-2 py-1 rounded border border-pwc-line text-xs bg-white"><option value="">Use engine result</option><option value="confirmed" ${rv.overrides && rv.overrides[i] === 'confirmed' ? 'selected' : ''}>Recruiter: confirmed met</option><option value="not_met" ${rv.overrides && rv.overrides[i] === 'not_met' ? 'selected' : ''}>Recruiter: not met</option></select></td></tr>`).join('') || '<tr><td colspan="3" class="p-3 text-pwc-grey">No mandatory requirements identified.</td></tr>';
+  const rows = c.mandatoryChecks.map((q, i) => `<tr><td class="py-2.5 px-3.5 align-top font-medium">${esc(q.requirement)}</td><td class="py-2.5 px-3.5 align-top">${{ met: 'Met', not_met: 'Not met', unclear: 'Unclear' }[q.status]}</td><td class="py-2.5 px-3.5 align-top"><label class="sr-only" for="ov${i}">Recruiter confirmation</label><select id="ov${i}" onchange="saveOverride('${id}',${i},this.value)" class="px-2.5 py-1.5 rounded-lg border border-pwc-line text-xs font-semibold bg-white"><option value="">Use engine result</option><option value="confirmed" ${rv.overrides && rv.overrides[i] === 'confirmed' ? 'selected' : ''}>Recruiter: confirmed met</option><option value="not_met" ${rv.overrides && rv.overrides[i] === 'not_met' ? 'selected' : ''}>Recruiter: not met</option></select></td></tr>`).join('') || '<tr><td colspan="3" class="p-4 text-pwc-grey">No mandatory requirements identified.</td></tr>';
   return `<div class="grid grid-cols-1 lg:grid-cols-3 gap-6"><div class="lg:col-span-2 space-y-6">
-    <div class="glass-card rounded-2xl p-6"><h3 class="font-serif text-lg font-bold mb-3">Recruiter decision</h3>
-      <label for="decision" class="block text-xs font-semibold text-pwc-slate mb-1">Decision</label>
-      <select id="decision" onchange="saveReviewField('${id}','decision',this.value)" class="px-3 py-2 rounded-lg border border-pwc-line text-sm bg-white">${['', 'Shortlist', 'Interview', 'Hold', 'Reject'].map(o => `<option value="${o}" ${rv.decision === o ? 'selected' : ''}>${o || 'Not decided'}</option>`).join('')}</select>
-      <label for="notes" class="block text-xs font-semibold text-pwc-slate mt-4 mb-1">Review notes</label>
-      <textarea id="notes" rows="5" onchange="saveReviewField('${id}','notes',this.value)" class="w-full px-3 py-2 rounded-lg border border-pwc-line text-sm">${esc(rv.notes)}</textarea><p id="reviewSaved" class="text-[11px] text-pwc-grey mt-1">Saved locally in this browser.</p></div>
-    <div class="glass-card rounded-2xl p-6"><h3 class="font-serif text-lg font-bold mb-3">Confirm mandatory requirements</h3><div class="overflow-x-auto rounded-xl border border-pwc-line"><table class="min-w-full text-left text-xs"><thead class="bg-pwc-charcoal text-white"><tr><th class="py-2 px-3">Requirement</th><th class="py-2 px-3">Engine</th><th class="py-2 px-3">Recruiter</th></tr></thead><tbody class="divide-y divide-pwc-line bg-white">${rows}</tbody></table></div></div></div>
-    <div class="glass-card rounded-2xl p-6 text-xs space-y-2 h-fit"><h3 class="font-serif text-lg font-bold">Decision-support snapshot</h3>
-      <p>JD match: <strong>${c.overallFitScore}%</strong> · ${getBadge(c.qualificationStatus)}</p><p>Weighted competency alignment: <strong>${al.score == null ? '—' : al.score}</strong> (${al.scored}/5 scored)</p>
-      <p>Mandatory requirements: <strong>${m.total ? `${m.met} met, ${m.unmet} not met, ${m.unclear} unclear` : 'n/a'}</strong></p>
-      <p>Est. first-year ROI: <strong>${r && r.roi != null ? fmtSigned(r.roi) : 'not entered'}</strong> <span class="text-pwc-grey">(scenario; not a recommendation)</span></p>
-      <p class="text-pwc-grey">Financial attractiveness is shown beside fit and mandatory requirements; none of them alone decides the hire.</p></div></div>`;
+    <div class="glass-card rounded-2xl p-6"><h3 class="font-serif text-lg font-bold text-pwc-charcoal mb-4 pb-2.5 border-b border-pwc-line">Recruiter Decision & Sign-Off</h3>
+      <label for="decision" class="block text-[11px] font-bold uppercase tracking-wider text-pwc-slate mb-1.5">Shortlist Status</label>
+      <select id="decision" onchange="saveReviewField('${id}','decision',this.value)" class="px-3.5 py-2.5 rounded-xl border border-pwc-line text-sm font-bold bg-pwc-surface focus:bg-white min-w-[200px]">${['', 'Shortlist', 'Interview', 'Hold', 'Reject'].map(o => `<option value="${o}" ${rv.decision === o ? 'selected' : ''}>${o || 'Not decided'}</option>`).join('')}</select>
+      <label for="notes" class="block text-[11px] font-bold uppercase tracking-wider text-pwc-slate mt-5 mb-1.5">Interview & Governance Notes</label>
+      <textarea id="notes" rows="5" onchange="saveReviewField('${id}','notes',this.value)" class="w-full px-3.5 py-3 rounded-xl border border-pwc-line bg-pwc-surface focus:bg-white text-sm">${esc(rv.notes)}</textarea><p id="reviewSaved" class="text-[11px] font-semibold text-emerald-700 mt-1.5">Saved locally in this browser.</p></div>
+    <div class="glass-card rounded-2xl p-6"><h3 class="font-serif text-lg font-bold text-pwc-charcoal mb-3">Confirm Mandatory Requirements</h3><div class="overflow-x-auto rounded-xl border border-pwc-line"><table class="min-w-full text-left text-xs"><thead class="bg-pwc-charcoal text-white"><tr><th class="py-3 px-3.5">Requirement</th><th class="py-3 px-3.5">Engine</th><th class="py-3 px-3.5">Recruiter Override</th></tr></thead><tbody class="divide-y divide-pwc-line bg-white">${rows}</tbody></table></div></div></div>
+    <div class="glass-card rounded-2xl p-6 text-xs space-y-3 h-fit bg-pwc-surface"><h3 class="font-serif text-lg font-bold text-pwc-charcoal pb-2.5 border-b border-pwc-line">Decision-Support Snapshot</h3>
+      <p class="flex items-center justify-between"><span>JD match:</span><strong>${c.overallFitScore}%</strong></p>
+      <p class="flex items-center justify-between"><span>Calibration:</span>${getBadge(c.qualificationStatus)}</p>
+      <p class="flex items-center justify-between"><span>Weighted alignment:</span><strong>${al.score == null ? '—' : al.score} (${al.scored}/5)</strong></p>
+      <p class="flex items-center justify-between"><span>Mandatory met:</span><strong>${m.total ? `${m.met} met, ${m.unmet} unmet, ${m.unclear} unclear` : 'n/a'}</strong></p>
+      <p class="flex items-center justify-between"><span>Est. first-year ROI:</span><strong>${r && r.roi != null ? fmtSigned(r.roi) : 'not entered'}</strong></p>
+      <p class="text-pwc-grey pt-3 border-t border-pwc-line leading-relaxed">Financial attractiveness is shown beside competency fit and mandatory requirements; none of them alone decides the hire.</p></div></div>`;
 }
 
 // ---------- Radar (shared by benchmarking and candidate page) ----------
 function radarConfig(sel) {
-  const ds = [{ label: 'Target JD benchmark (100)', data: DIMENSIONS.map(() => 100), borderColor: '#FD5108', backgroundColor: 'rgba(253,81,8,0.16)', borderWidth: 3, pointRadius: 4, pointBackgroundColor: '#FD5108', pointStyle: 'circle' }];
+  const ds = [{ label: 'Target JD benchmark (100)', data: DIMENSIONS.map(() => 100), borderColor: '#FD5108', backgroundColor: 'rgba(253,81,8,0.14)', borderWidth: 3, pointRadius: 4, pointBackgroundColor: '#FD5108', pointStyle: 'circle' }];
   sel.forEach((c, i) => { const col = SERIES_COLORS[i % SERIES_COLORS.length]; ds.push({ label: c.name, data: c.dims.map(d => d.score), borderColor: col, backgroundColor: hexA(col, 0.12), borderWidth: 2.5, borderDash: i % 2 ? [7, 4] : [], pointStyle: SERIES_POINTS[i % SERIES_POINTS.length], pointRadius: 5, pointHoverRadius: 7, pointBackgroundColor: col, spanGaps: true }); });
   return { type: 'radar', data: { labels: DIMENSIONS.map(d => wrapLabel(d.label)), datasets: ds },
     options: { responsive: true, maintainAspectRatio: false, animation: { duration: 350 },
-      scales: { r: { min: 0, max: 100, ticks: { stepSize: 20, backdropColor: 'transparent', color: '#6B6B6B' }, pointLabels: { font: { size: 12, weight: '600' }, color: '#2D2D2D' }, grid: { color: '#DDD9D1' }, angleLines: { color: '#DDD9D1' } } },
-      plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 14 } },
-        tooltip: { callbacks: { title: items => [].concat(items[0].label).join(' '), label: ctx => { if (ctx.datasetIndex === 0) return 'JD benchmark: 100'; const v = ctx.raw; return v == null ? `${ctx.dataset.label}: insufficient evidence` : [`${ctx.dataset.label}`, `Score: ${v}`, `JD benchmark: 100`, `Gap: ${100 - v} pts below benchmark`]; } } } } } };
+      scales: { r: { min: 0, max: 100, ticks: { stepSize: 20, backdropColor: 'transparent', color: '#6B6B6B', font: { size: 10 } }, pointLabels: { font: { size: 11.5, weight: '700' }, color: '#2D2D2D' }, grid: { color: '#E4E1DB' }, angleLines: { color: '#E4E1DB' } } },
+      plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 16, font: { size: 11.5, weight: '600' } } },
+        tooltip: { backgroundColor: '#2D2D2D', padding: 10, cornerRadius: 8, callbacks: { title: items => [].concat(items[0].label).join(' '), label: ctx => { if (ctx.datasetIndex === 0) return 'JD benchmark: 100'; const v = ctx.raw; return v == null ? `${ctx.dataset.label}: insufficient evidence` : [`${ctx.dataset.label}`, `Score: ${v}`, `JD benchmark: 100`, `Gap: ${100 - v} pts below benchmark`]; } } } } } };
 }
 
 // ---------- Competency Benchmarking ----------
@@ -1597,7 +1974,7 @@ function renderBenchmark() {
   const ids = cands().map(c => c.id);
   state.bench.selected = state.bench.selected.filter(id => ids.includes(id));
   if (!state.bench.selected.length) state.bench.selected = cands().slice(0, 3).map(c => c.id);
-  $('benchPicker').innerHTML = cands().map(c => `<label class="flex items-center gap-2 text-xs p-2 rounded-lg border border-pwc-line hover:border-pwc-orange cursor-pointer"><input type="checkbox" class="w-4 h-4 accent-[#FD5108]" value="${esc(c.id)}" ${state.bench.selected.includes(c.id) ? 'checked' : ''} onchange="toggleBench(this.value,this.checked,this)"><span class="font-semibold truncate">#${c.rank} ${esc(c.name)}</span></label>`).join('');
+  $('benchPicker').innerHTML = cands().map(c => `<label class="flex items-center gap-2.5 text-xs p-2.5 rounded-xl bg-white border border-pwc-line hover:border-pwc-orange cursor-pointer transition-colors"><input type="checkbox" class="w-4 h-4 accent-[#FD5108] rounded" value="${esc(c.id)}" ${state.bench.selected.includes(c.id) ? 'checked' : ''} onchange="toggleBench(this.value,this.checked,this)"><span class="font-bold text-pwc-charcoal truncate">#${c.rank} ${esc(c.name)}</span></label>`).join('');
   renderWeights(); renderMethodology(); updateBenchmark();
 }
 function toggleBench(id, on, el) {
@@ -1615,21 +1992,22 @@ function updateBenchmark() {
   const lacking = sel.filter(c => c.dims.some(d => d.score == null)).map(c => `${c.name} (${c.dims.filter(d => d.score == null).map(d => dimLabel(DIMENSIONS.findIndex(x => x.key === d.key))).join(', ')})`);
   $('benchNote').innerText = sel.length ? (lacking.length ? 'Insufficient evidence, not plotted and not scored as zero: ' + lacking.join('; ') + '.' : 'All five dimensions have evidence for every selected candidate.') : 'Select at least one candidate to compare.';
   const w = getWeights(), tot = w.reduce((a, b) => a + b, 0);
-  $('benchGap').innerHTML = sel.map((c, i) => `<div class="rounded-xl border border-pwc-line p-4"><div class="flex items-center gap-2 mb-2"><span class="w-3 h-3 rounded-full" style="background:${SERIES_COLORS[i % 8]}"></span><strong class="text-sm">${esc(c.name)}</strong></div>
-    ${c.dims.map((d, k) => `<div class="mb-2"><div class="flex justify-between text-[11px]"><span>${dimLabel(k)}</span><span class="num font-bold">${d.score == null ? 'n/a' : 'gap ' + (100 - d.score)}</span></div>
-      <div class="h-2 rounded bg-pwc-light overflow-hidden">${d.score == null ? '<div class="h-2 w-full" style="background:repeating-linear-gradient(45deg,#E4E1DB,#E4E1DB 4px,#fff 4px,#fff 8px)"></div>' : `<div class="h-2" style="width:${d.score}%;background:${SERIES_COLORS[i % 8]}"></div>`}</div>
-      <div class="text-[10px] text-pwc-grey">${d.score == null ? 'Insufficient evidence' : 'Score ' + d.score} · evidence coverage ${d.coverage}%</div></div>`).join('')}</div>`).join('') || '<p class="text-xs text-pwc-grey">Select candidates above.</p>';
+  $('benchGap').innerHTML = sel.map((c, i) => `<div class="rounded-2xl bg-pwc-surface border border-pwc-line p-4"><div class="flex items-center gap-2 mb-3 pb-2 border-b border-pwc-line"><span class="w-3 h-3 rounded-full" style="background:${SERIES_COLORS[i % 8]}"></span><strong class="text-sm text-pwc-charcoal">${esc(c.name)}</strong></div>
+    ${c.dims.map((d, k) => `<div class="mb-2.5 last:mb-0"><div class="flex justify-between text-[11px] mb-1"><span class="font-medium text-pwc-slate">${dimLabel(k)}</span><span class="num font-bold text-pwc-charcoal">${d.score == null ? 'n/a' : 'gap ' + (100 - d.score)}</span></div>
+      <div class="h-2 rounded-full bg-pwc-light overflow-hidden">${d.score == null ? '<div class="h-2 w-full" style="background:repeating-linear-gradient(45deg,#E4E1DB,#E4E1DB 4px,#fff 4px,#fff 8px)"></div>' : `<div class="h-2 rounded-full" style="width:${d.score}%;background:${SERIES_COLORS[i % 8]}"></div>`}</div>
+      <div class="text-[10px] text-pwc-grey mt-0.5">${d.score == null ? 'Insufficient evidence' : 'Score ' + d.score} · evidence coverage ${d.coverage}%</div></div>`).join('')}</div>`).join('') || '<p class="text-xs text-pwc-grey">Select candidates above.</p>';
   $('benchHighlights').innerHTML = sel.map((c, i) => {
     const sc = c.dims.map((d, k) => ({ k, s: d.score })).filter(x => x.s != null);
     const hi = sc.length ? sc.reduce((a, b) => b.s > a.s ? b : a) : null, lo = sc.length ? sc.reduce((a, b) => b.s < a.s ? b : a) : null, al = weightedAlignment(c), av = simpleAverage(c);
-    return `<div class="rounded-xl border border-pwc-line p-4 text-xs space-y-1"><div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full" style="background:${SERIES_COLORS[i % 8]}"></span><strong class="text-sm">${esc(c.name)}</strong></div>
-      <p>Highest: <strong>${hi ? dimLabel(hi.k) + ' (' + hi.s + ')' : 'n/a'}</strong></p><p>Lowest: <strong>${lo ? dimLabel(lo.k) + ' (' + lo.s + ')' : 'n/a'}</strong></p>
-      <p>Average competency: <strong>${av == null ? 'n/a' : av}</strong> · Weighted alignment: <strong>${al.score == null ? 'n/a' : al.score}</strong> <span class="text-pwc-grey">(${al.scored}/5 scored)</span></p>
-      <p>Overall JD match: <strong>${c.overallFitScore}%</strong> · Evidence coverage: <strong>${avgCoverage(c)}%</strong></p></div>`;
+    return `<div class="rounded-2xl bg-pwc-surface border border-pwc-line p-4 text-xs space-y-1.5"><div class="flex items-center gap-2 pb-2 mb-1 border-b border-pwc-line"><span class="w-3 h-3 rounded-full" style="background:${SERIES_COLORS[i % 8]}"></span><strong class="text-sm text-pwc-charcoal">${esc(c.name)}</strong></div>
+      <p class="flex justify-between"><span class="text-pwc-grey">Highest:</span><strong class="text-emerald-800">${hi ? dimLabel(hi.k) + ' (' + hi.s + ')' : 'n/a'}</strong></p>
+      <p class="flex justify-between"><span class="text-pwc-grey">Lowest:</span><strong class="text-rose-800">${lo ? dimLabel(lo.k) + ' (' + lo.s + ')' : 'n/a'}</strong></p>
+      <p class="flex justify-between"><span class="text-pwc-grey">Weighted alignment:</span><strong>${al.score == null ? 'n/a' : al.score} <span class="font-normal text-pwc-grey">(${al.scored}/5)</span></strong></p>
+      <p class="flex justify-between"><span class="text-pwc-grey">Overall JD match:</span><strong class="text-pwc-burgundy">${c.overallFitScore}%</strong></p></div>`;
   }).join('');
-  $('benchTable').innerHTML = `<thead class="bg-pwc-charcoal text-white"><tr><th scope="col" class="py-2.5 px-3">Candidate</th>${DIMENSIONS.map(d => `<th scope="col" class="py-2.5 px-3">${d.label}</th>`).join('')}<th scope="col" class="py-2.5 px-3">Average</th><th scope="col" class="py-2.5 px-3">Weighted alignment</th><th scope="col" class="py-2.5 px-3">JD match</th></tr></thead>
-    <tbody class="divide-y divide-pwc-line bg-white"><tr class="bg-orange-50"><th scope="row" class="py-2.5 px-3 text-left font-bold">Target JD benchmark</th>${DIMENSIONS.map(() => '<td class="py-2.5 px-3 num font-bold">100</td>').join('')}<td class="py-2.5 px-3 num font-bold">100</td><td class="py-2.5 px-3 num font-bold">100</td><td class="py-2.5 px-3">—</td></tr>
-    ${sel.map(c => { const al = weightedAlignment(c), av = simpleAverage(c); return `<tr><th scope="row" class="py-2.5 px-3 text-left font-bold whitespace-nowrap">${esc(c.name)}<div class="text-[10px] font-normal text-pwc-grey">${esc(c.id)}</div></th>${c.dims.map(d => `<td class="py-2.5 px-3 num">${d.score == null ? '<span class="text-amber-800">n/a</span>' : '<strong>' + d.score + '</strong>'}<div class="text-[10px] text-pwc-grey">cov ${d.coverage}%</div></td>`).join('')}<td class="py-2.5 px-3 num">${av == null ? 'n/a' : av}</td><td class="py-2.5 px-3 num font-bold">${al.score == null ? 'n/a' : al.score}</td><td class="py-2.5 px-3 num">${c.overallFitScore}%</td></tr>`; }).join('')}</tbody>`;
+  $('benchTable').innerHTML = `<thead class="bg-pwc-charcoal text-white"><tr><th scope="col" class="py-3 px-3.5">Candidate</th>${DIMENSIONS.map(d => `<th scope="col" class="py-3 px-3.5">${d.label}</th>`).join('')}<th scope="col" class="py-3 px-3.5">Average</th><th scope="col" class="py-3 px-3.5">Weighted alignment</th><th scope="col" class="py-3 px-3.5">JD match</th></tr></thead>
+    <tbody class="divide-y divide-pwc-line bg-white"><tr class="!bg-orange-50/70"><th scope="row" class="py-3 px-3.5 text-left font-bold text-pwc-burgundy">Target JD benchmark</th>${DIMENSIONS.map(() => '<td class="py-3 px-3.5 num font-bold text-pwc-burgundy">100</td>').join('')}<td class="py-3 px-3.5 num font-bold text-pwc-burgundy">100</td><td class="py-3 px-3.5 num font-bold text-pwc-burgundy">100</td><td class="py-3 px-3.5">—</td></tr>
+    ${sel.map(c => { const al = weightedAlignment(c), av = simpleAverage(c); return `<tr><th scope="row" class="py-3 px-3.5 text-left font-bold whitespace-nowrap">${esc(c.name)}<div class="text-[10px] font-normal text-pwc-grey">${esc(c.id)}</div></th>${c.dims.map(d => `<td class="py-3 px-3.5 num">${d.score == null ? '<span class="text-amber-800 font-semibold">n/a</span>' : '<strong>' + d.score + '</strong>'}<div class="text-[10px] text-pwc-grey">cov ${d.coverage}%</div></td>`).join('')}<td class="py-3 px-3.5 num">${av == null ? 'n/a' : av}</td><td class="py-3 px-3.5 num font-bold">${al.score == null ? 'n/a' : al.score}</td><td class="py-3 px-3.5 num font-bold text-pwc-burgundy">${c.overallFitScore}%</td></tr>`; }).join('')}</tbody>`;
   const opts = sel.map(c => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
   const a = $('benchA'), b = $('benchB'), pa = a.value, pb = b.value;
   a.innerHTML = opts; b.innerHTML = opts;
@@ -1640,19 +2018,19 @@ function renderBenchAB() {
   const A = candById($('benchA').value), B = candById($('benchB').value), el = $('benchAB');
   if (!A || !B) { el.innerHTML = '<p class="text-pwc-grey">Select at least two candidates to compare them head-to-head.</p>'; return; }
   if (A.id === B.id) { el.innerHTML = '<p class="text-pwc-grey">Choose two different candidates.</p>'; return; }
-  el.innerHTML = `<ul class="space-y-1.5">${DIMENSIONS.map((D, k) => { const a = A.dims[k].score, b = B.dims[k].score; if (a == null || b == null) return `<li><strong>${D.label}:</strong> cannot compare (insufficient evidence for ${a == null ? esc(A.name) : esc(B.name)})</li>`; const d = a - b; return `<li><strong>${D.label}:</strong> ${esc(A.name)} ${a} vs ${esc(B.name)} ${b} → ${d === 0 ? 'level' : (d > 0 ? esc(A.name) : esc(B.name)) + ' leads by ' + Math.abs(d)}</li>`; }).join('')}</ul>
-    <p class="mt-2 text-pwc-slate">Overall JD match: ${esc(A.name)} ${A.overallFitScore}% vs ${esc(B.name)} ${B.overallFitScore}%.</p>`;
+  el.innerHTML = `<ul class="space-y-1.5">${DIMENSIONS.map((D, k) => { const a = A.dims[k].score, b = B.dims[k].score; if (a == null || b == null) return `<li><strong>${D.label}:</strong> cannot compare (insufficient evidence for ${a == null ? esc(A.name) : esc(B.name)})</li>`; const d = a - b; return `<li><strong>${D.label}:</strong> ${esc(A.name)} <span class="num font-bold">${a}</span> vs ${esc(B.name)} <span class="num font-bold">${b}</span> → <span class="font-bold text-pwc-burgundy">${d === 0 ? 'level' : (d > 0 ? esc(A.name) : esc(B.name)) + ' leads by ' + Math.abs(d)}</span></li>`; }).join('')}</ul>
+    <p class="mt-3 pt-2.5 border-t border-pwc-line font-semibold text-pwc-charcoal">Overall JD match: ${esc(A.name)} ${A.overallFitScore}% vs ${esc(B.name)} ${B.overallFitScore}%.</p>`;
 }
 
 // ---------- Weights (administrator) + methodology ----------
 function toggleRole() { state.role = state.role === 'admin' ? 'recruiter' : 'admin'; renderWeights(); }
 function renderWeights() {
   const w = getWeights(), tot = w.reduce((a, b) => a + b, 0), admin = state.role === 'admin';
-  $('weightsPanel').innerHTML = `<div class="flex flex-wrap items-center justify-between gap-2 mb-3"><div><h4 class="font-serif text-lg font-bold">Competency weights</h4><p class="text-xs text-pwc-grey">Used for the weighted alignment score. Weights are normalised to 100%. Ranking uses the screening match score.</p></div>
-    <button onclick="toggleRole()" class="text-xs font-bold px-3 py-1.5 rounded-lg border border-pwc-line hover:border-pwc-orange" aria-pressed="${admin}">${admin ? 'Administrator mode: on' : 'Switch to administrator mode'}</button></div>
-    <div class="grid grid-cols-1 sm:grid-cols-5 gap-3">${DIMENSIONS.map((d, i) => `<div class="rounded-xl border border-pwc-line p-3"><label for="w${i}" class="block text-[11px] font-bold text-pwc-slate mb-1">${d.label}</label>${admin ? `<input id="w${i}" type="number" min="0" max="100" step="1" value="${w[i]}" class="w-full px-2 py-1.5 rounded border border-pwc-line text-sm num">` : `<div class="text-lg font-bold num">${Math.round(w[i] / tot * 100)}%</div>`}</div>`).join('')}</div>
-    ${admin ? '<div class="mt-3 flex gap-2"><button onclick="saveWeights()" class="px-3.5 py-2 rounded-lg bg-pwc-orange hover:bg-pwc-burgundy text-black hover:text-white text-xs font-bold">Save weights</button><button onclick="resetWeights()" class="px-3.5 py-2 rounded-lg border border-pwc-line text-xs font-bold">Reset to equal</button></div>' : ''}
-    <p class="text-[11px] text-pwc-grey mt-2">Administrator mode is a client-side gate for this standalone app. Enforce real permissions with server-side authentication before sharing widely.</p>`;
+  $('weightsPanel').innerHTML = `<div class="flex flex-wrap items-center justify-between gap-2 mb-4"><div><h4 class="font-serif text-lg font-bold text-pwc-charcoal">Competency Weights</h4><p class="text-xs text-pwc-grey">Used for the weighted alignment score. Weights are normalised to 100%. Ranking uses the screening match score.</p></div>
+    <button onclick="toggleRole()" class="text-xs font-bold px-3.5 py-2 rounded-xl border border-pwc-line hover:border-pwc-orange transition-colors" aria-pressed="${admin}">${admin ? 'Administrator mode: on' : 'Switch to administrator mode'}</button></div>
+    <div class="grid grid-cols-1 sm:grid-cols-5 gap-3">${DIMENSIONS.map((d, i) => `<div class="rounded-xl bg-pwc-surface border border-pwc-line p-3.5"><label for="w${i}" class="block text-[11px] font-bold text-pwc-slate mb-1.5">${d.label}</label>${admin ? `<input id="w${i}" type="number" min="0" max="100" step="1" value="${w[i]}" class="w-full px-2.5 py-1.5 rounded-lg border border-pwc-line bg-white text-sm font-bold num">` : `<div class="text-xl font-bold text-pwc-charcoal num">${Math.round(w[i] / tot * 100)}%</div>`}</div>`).join('')}</div>
+    ${admin ? '<div class="mt-4 flex gap-2"><button onclick="saveWeights()" class="px-4 py-2 rounded-xl bg-pwc-orange hover:bg-pwc-burgundy text-pwc-charcoal hover:text-white text-xs font-bold transition-colors">Save weights</button><button onclick="resetWeights()" class="px-4 py-2 rounded-xl border border-pwc-line text-xs font-bold hover:border-pwc-orange transition-colors">Reset to equal</button></div>' : ''}
+    <p class="text-[11px] text-pwc-grey mt-3">Administrator mode is a client-side gate for this standalone app. Enforce real permissions with server-side authentication before sharing widely.</p>`;
 }
 function saveWeights() {
   const w = DIMENSIONS.map((d, i) => Number($('w' + i).value));
