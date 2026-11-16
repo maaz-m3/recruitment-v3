@@ -1,18 +1,25 @@
 
+const DEFAULT_MODEL = "gemini-3.8-flash";
+
+// Check whether the Gemini key is configured.
 export async function onRequestGet({ env }) {
-  return Response.json({
-    configured: Boolean(env.GEMINI_API_KEY),
-    provider: "Google Gemini"
-  }, {
-    headers: { "Cache-Control": "no-store" }
-  });
+  return Response.json(
+    {
+      configured: Boolean(env.GEMINI_API_KEY),
+      provider: "Google Gemini"
+    },
+    {
+      headers: { "Cache-Control": "no-store" }
+    }
+  );
 }
 
+// Receive the screening request from TalentLens.
 export async function onRequestPost({ request, env }) {
   try {
     if (!env.GEMINI_API_KEY) {
       return Response.json(
-        { error: "Gemini API key is not configured." },
+        { error: "Gemini API key is missing." },
         { status: 500 }
       );
     }
@@ -20,10 +27,8 @@ export async function onRequestPost({ request, env }) {
     const payload = await request.json();
 
     if (
-      !payload ||
-      !Array.isArray(payload.contents) ||
-      !payload.contents.length ||
-      !payload.generationConfig
+      !payload?.contents ||
+      !payload?.generationConfig
     ) {
       return Response.json(
         { error: "Invalid screening request." },
@@ -31,9 +36,9 @@ export async function onRequestPost({ request, env }) {
       );
     }
 
-    const model = env.GEMINI_MODEL || "gemini-3.8-flash";
+    const model = env.GEMINI_MODEL || DEFAULT_MODEL;
 
-    const geminiResponse = await fetch(
+    const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
       {
         method: "POST",
@@ -45,17 +50,19 @@ export async function onRequestPost({ request, env }) {
       }
     );
 
-    const result = await geminiResponse.json();
+    const result = await response.json();
 
-    if (!geminiResponse.ok) {
-      console.error("Gemini request failed:", {
-        status: geminiResponse.status,
-        error: result.error?.message
-      });
+    if (!response.ok) {
+      console.error(
+        "Gemini API error:",
+        response.status,
+        result.error?.message
+      );
 
       return Response.json(
         {
-          error: result.error?.message || "Gemini screening failed."
+          error: result.error?.message ||
+            "Gemini request failed."
         },
         { status: 502 }
       );
@@ -66,7 +73,7 @@ export async function onRequestPost({ request, env }) {
     });
 
   } catch (error) {
-    console.error("TalentLens API error:", error.message);
+    console.error("Screening API error:", error.message);
 
     return Response.json(
       { error: "Unable to process screening request." },
